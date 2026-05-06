@@ -1,0 +1,6 @@
+[submodule "services/consumer/inner"]
+	path = services/consumer/inner
+	url = https://github.com/EunomiaUPM/ecostars-consumer-case
+[submodule "services/provider/inner"]
+	path = services/provider/inner
+	url = https://github.com/EunomiaUPM/ecostars-mock-api
