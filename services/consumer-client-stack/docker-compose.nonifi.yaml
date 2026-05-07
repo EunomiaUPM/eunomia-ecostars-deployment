@@ -1,0 +1,64 @@
+name: ecostars-consumer-stack
+
+x-common:
+  common-env: &common-env
+    POSTGRES_USER: postgres
+    POSTGRES_PASSWORD: postgres
+    POSTGRES_DB: postgres
+
+services:
+  ingestion-service:
+    build:
+      context: ./ingestion-service
+      dockerfile: Dockerfile
+    container_name: ingestion-service
+    deploy:
+      replicas: 1
+    environment:
+      ENV: production
+      DATABASE_USER: postgres
+      DATABASE_PASSWORD: postgres
+      DATABASE_HOST: transactional-db # service name, not localhost
+      DATABASE_PORT: 5432 # internal port, not 5440
+      DATABASE_NAME: postgres
+    ports:
+      - "8000:8000"
+    depends_on:
+      transactional-db:
+        condition: service_healthy
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  transactional-db:
+    image: postgres:15
+    container_name: transactional-db
+    deploy:
+      replicas: 1
+    environment:
+      <<: *common-env
+    ports:
+      - "5440:5432"
+    volumes:
+      - transactional-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  metabase:
+    image: metabase/metabase:latest
+    container_name: metabase
+    deploy:
+      replicas: 1
+    ports:
+      - "3000:3000"
+    depends_on:
+      - transactional-db
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+volumes:
+  transactional-db-data:

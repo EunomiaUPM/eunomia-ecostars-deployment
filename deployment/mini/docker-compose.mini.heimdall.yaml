@@ -1,8 +1,8 @@
-name: mini-heimdall
+name: ecostars-authority
 
 services:
   heimdall-db:
-    container_name: heimdall-db
+    container_name: ecostars-authority-heimdall-db
     image: postgres
     restart: always
     env_file:
@@ -11,7 +11,7 @@ services:
       - "1450:5432"
 
   heimdall-setup:
-    container_name: heimdall-setup
+    container_name: ecostars-authority-heimdall-setup
     image: rmenendez8/heimdall:v2.0.0
     volumes:
       - ./../../static/config/heimdall/mini:/app/static/config
@@ -28,7 +28,7 @@ services:
     restart: "no"
 
   heimdall:
-    container_name: heimdall
+    container_name: ecostars-authority-heimdall
     image: rmenendez8/heimdall:v2.0.0
     ports:
       - "1500:1500"

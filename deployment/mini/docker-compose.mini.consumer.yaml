@@ -1,8 +1,8 @@
-name: mini-consumer
+name: ecostars-consumer
 
 services:
   consumer-db:
-    container_name: "consumer-db"
+    container_name: ecostars-consumer-db
     image: "postgres"
     restart: always
     env_file:
@@ -13,21 +13,20 @@ services:
   consumer-redis:
     image: redis:alpine
     restart: always
-    container_name: consumer-redis
+    container_name: ecostars-consumer-redis
     ports:
       - "6380:6379"
     command: >
-      redis-server 
-      --requirepass ds_core_consumer_redis
-      --user admin on >ds_core_consumer_redis ~* +@all
+      redis-server  --requirepass ds_core_consumer_redis --user admin on
+      >ds_core_consumer_redis ~* +@all
 
   # =========================
   # Setup job (one-shot)
   # =========================
   consumer-setup:
-    container_name: consumer-setup
-    image: rmenendez8/rainbow:v1.3.0
-    command: ["setup", "-e", "/app/static/config/mini.consumer.yaml"]
+    container_name: ecostars-consumer-setup
+    image: quay.io/eunomia_upm/ds-agent-core:0.3.9
+    command: [ "setup", "-e", "/app/static/config/mini.consumer.yaml" ]
     volumes:
       - ./../../static/config/consumer/mini:/app/static/config
       - ./../../static/specs/agent:/app/static/specs
@@ -44,9 +43,9 @@ services:
   # Main service
   # =========================
   consumer:
-    container_name: consumer
-    image: rmenendez8/rainbow:v1.3.0
-    command: ["start", "-e", "/app/static/config/mini.consumer.yaml"]
+    container_name: ecostars-consumer
+    image: quay.io/eunomia_upm/ds-agent-core:0.3.9
+    command: [ "start", "-e", "/app/static/config/mini.consumer.yaml" ]
     ports:
       - "1100:1100"
     volumes:
