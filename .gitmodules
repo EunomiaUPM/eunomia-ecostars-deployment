@@ -1,8 +1,8 @@
-[submodule "services/consumer/inner"]
-	path = services/consumer/inner
+[submodule "services/consumer-client-stack/inner"]
+	path = services/consumer-client-stack/inner
 	url = https://github.com/EunomiaUPM/ecostars-consumer-case
 	ignore = untracked
-[submodule "services/provider/inner"]
-	path = services/provider/inner
+[submodule "services/provider-final-system/inner"]
+	path = services/provider-final-system/inner
 	url = https://github.com/EunomiaUPM/ecostars-mock-api
 	ignore = untracked
