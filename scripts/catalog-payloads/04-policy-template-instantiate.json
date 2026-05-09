@@ -1,0 +1,10 @@
+{
+  "id": "policy-1",
+  "version": "1.0",
+  "parameters": {
+    "$bla": "did:web:university.upm.es"
+  },
+  "entityId": "__DATASET_ID__",
+  "entityType": "Dataset",
+  "description": "Research access for UPM: grants read access to did:web:university.upm.es valid until 2025-12-31."
+}

@@ -1,0 +1,16 @@
+{
+  "templateName": "__CONN_PULL_NAME__",
+  "templateVersion": "__CONN_PULL_VERSION__",
+  "distributionId": "__DISTRIBUTION_PULL_ID__",
+  "metadata": {
+    "description": "Connector to pull data from a static API",
+    "ownerId": "ECOSTARS"
+  },
+  "dryRun": false,
+  "parameters": {
+    "ACCESS_URL": "__STATIC_API__",
+    "ACCESS_METHODS": ["GET", "HEAD"],
+    "ACCESS_HEADERS": { "Content-type": "application/json" },
+    "TOKEN": "eyJhbGciOiJSUzI1NiIsInR5cCIgOiAiSldUIiwia2lkIiA6ICJBMFhsUG9YcmE4YVoyUkdUeUo5UlVYTTlCVjJGMnJYQXNtcGZiRmhVVGQ4In0.eyJleHAiOjE3NzgyNDgzMTUsImlhdCI6MTc3ODI0ODAxNSwianRpIjoiNzZhYzUzMjMtZGQ5MC00NTk2LTg2ZTAtMjE5YTlhYWNiMmIxIiwiaXNzIjoiaHR0cDovLzEyNy4wLjAuMTo4MDgzL3JlYWxtcy9lY29zdGFycyIsInN1YiI6IjExNGEyZTQ0LTAxNGMtNDY4Zi1hYWQyLTFmZjE5ZjgzMjVhYSIsInR5cCI6IkJlYXJlciIsImF6cCI6ImVjb3N0YXJzLWNsaWVudCIsInNpZCI6ImEwMDY1MzZkLWVkNTMtNGU3Mi1hNDkyLWRjZjc2MDE5NGU1ZCIsImFjciI6IjEiLCJhbGxvd2VkLW9yaWdpbnMiOlsiKiJdLCJyZWFsbV9hY2Nlc3MiOnsicm9sZXMiOlsidXNlciJdfSwic2NvcGUiOiJwcm9maWxlIGVtYWlsIiwiZW1haWxfdmVyaWZpZWQiOnRydWUsIm5hbWUiOiJUZXN0IFVzZXIiLCJwcmVmZXJyZWRfdXNlcm5hbWUiOiJ0ZXN0dXNlciIsImdpdmVuX25hbWUiOiJUZXN0IiwiZmFtaWx5X25hbWUiOiJVc2VyIiwiZW1haWwiOiJ0ZXN0dXNlckBleGFtcGxlLmNvbSJ9.gv7S9XfxftwVWvs2wHvaqza5BKFZ8BWzwv2O0gZtSlIq3BsrdB_-FsPBDeccWYf0ofTxaOoE3u9e12Ovxu89JyM3NMsn2IA4kEo4J41bWWrIXTOtqcb2qwhZDKht9_Pg073flcXLGLMJLQVfr-UsS1kenIwd-AkePpq28KaO8lFqWozuTHx_hKrosyB719BUoEprjexam0r15gc_y3hDwBccuwjQCP6X6sOGZBju5cc7t2zLz62PrUtlxoUKzfQVomprw4Ehwyp9z5nXFiV6qDJEXT7Ij0rlnNuDJUIhovxFcJQnnLrACWeJYVQIYvFJ6N49boLRsNSDJdG_Vxkhdw"
+  }
+}

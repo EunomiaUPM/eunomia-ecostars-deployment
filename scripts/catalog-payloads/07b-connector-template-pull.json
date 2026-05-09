@@ -1,0 +1,44 @@
+{
+  "authentication": {
+    "type": "BEARER_TOKEN",
+    "token": {
+      "type": "PLAIN",
+      "content": "{{__TOKEN__}}"
+    }
+  },
+  "interaction": {
+    "mode": "PULL",
+    "dataAccess": {
+      "protocol": "HTTP",
+      "urlTemplate": "{{__ACCESS_URL__}}",
+      "method": "{{__ACCESS_METHODS__}}",
+      "headers": "{{__ACCESS_HEADERS__}}"
+    }
+  },
+  "parameters": [
+    {
+      "paramType": "STRING",
+      "name": "ACCESS_URL",
+      "title": "Url",
+      "required": true
+    },
+    {
+      "paramType": "VEC<STRING>",
+      "name": "ACCESS_METHODS",
+      "title": "Methods",
+      "required": true
+    },
+    {
+      "paramType": "MAP<STRING,STRING>",
+      "name": "ACCESS_HEADERS",
+      "title": "Headers",
+      "required": true
+    },
+    {
+      "paramType": "STRING",
+      "name": "TOKEN",
+      "title": "Token",
+      "required": true
+    }
+  ]
+}

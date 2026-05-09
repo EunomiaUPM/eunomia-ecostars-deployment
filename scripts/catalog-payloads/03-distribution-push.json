@@ -1,0 +1,7 @@
+{
+  "dctTitle": "Distribution of a streaming dataset",
+  "dctDescription": "This is the distribution of my streaming dataset",
+  "dcatAccessService": "__DATA_SERVICE_ID__",
+  "datasetId": "__DATASET_ID__",
+  "dctFormats": "HTTP_PUSH"
+}

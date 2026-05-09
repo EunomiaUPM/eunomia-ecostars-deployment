@@ -1,0 +1,20 @@
+{
+  "templateName": "__CONN_PULL_NAME__",
+  "templateVersion": "__CONN_PULL_VERSION__",
+  "distributionId": "__DISTRIBUTION_PULL_ID__",
+  "metadata": {
+    "description": "Connector to pull data from a static API",
+    "ownerId": "ECOSTARS"
+  },
+  "dryRun": false,
+  "parameters": {
+    "ACCESS_URL": "http://static-api:8081",
+    "ACCESS_METHODS": ["GET", "HEAD"],
+    "ACCESS_HEADERS": { "Content-Type": "application/json" },
+    "USER_NAME": "testuser",
+    "USER_PASS": "password",
+    "TOKEN_URL": "http://localhost:8083/realms/ecostars/protocol/openid-connect/token",
+    "CLIENT_ID": "ecostars-client",
+    "CLIENT_SECRET": "ecostars-secret"
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "templateName": "__CONN_PULL_NAME__",
+  "templateVersion": "__CONN_PULL_VERSION__",
+  "distributionId": "__DISTRIBUTION_PULL_ID__",
+  "metadata": {
+    "description": "Connector to pull data from a static API",
+    "ownerId": "ECOSTARS"
+  },
+  "dryRun": false,
+  "parameters": {
+    "ACCESS_URL": "__STATIC_API__",
+    "ACCESS_METHODS": ["GET", "HEAD"],
+    "ACCESS_HEADERS": { "Content-type": "application/json" }
+  }
+}

@@ -9,7 +9,7 @@ x-common:
 services:
   ingestion-service:
     build:
-      context: ./ingestion-service
+      context: ./inner/ingestion-service
       dockerfile: Dockerfile
     container_name: ingestion-service
     deploy:
