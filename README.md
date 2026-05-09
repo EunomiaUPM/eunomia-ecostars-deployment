@@ -69,15 +69,14 @@ The script creates the full catalog in one shot: dataset → distributions (pull
 
 This deployment orchestrates two layers of components: the dataspace infrastructure provided by Eunomia, and the Ecostars-specific services that exercise the pilot.
 
+![Full system architecture](services/consumer-client-stack/inner/static/image_a.png)
+
 ### Dataspace layer (Eunomia)
 
 - **[Eunomia Agents](https://github.com/EunomiaUPM/ds-agent)**: The Dataspace Agents that handle the core logic for participants. Both the Ecostars Provider and Consumer sit behind their own agent.
 - **[Heimdall](https://github.com/EunomiaUPM/heimdall)**: The Dataspace Authority and Clearing House that governs onboarding and compliance.
 
 ### Ecostars layer
-
-- **[Ecostars Provider (Mock Server)](./services/provider/README.md)**: A Go service exposing a static REST API for hotels and yearly measures, plus a PubSub dynamic API for real-time metric updates. Protected by Keycloak.
-- **[Ecostars Consumer (Ingestion Service)](./services/consumer/README.md)**: A FastAPI microservice that pulls bulk data and receives push notifications from the Provider, persisting everything into PostgreSQL for Metabase dashboards.
 
 ```plain
                               ┌─────────────┐
@@ -100,6 +99,105 @@ This deployment orchestrates two layers of components: the dataspace infrastruct
                                                   │   Metabase     │
                                                   └────────────────┘
 ```
+
+---
+
+### Provider — Mock Server
+
+A Go service ([`services/provider-final-system/`](./services/provider-final-system/)) exposing two APIs, both protected by Keycloak.
+
+**Static API** (`http://localhost:8081`) — hotels and their yearly sustainability measures:
+
+```bash
+curl -H "Authorization: Bearer $TOKEN" http://localhost:8081/hotels
+```
+
+**Dynamic API** (`http://localhost:8082`) — real-time metric simulation with a PubSub subscription system:
+
+```bash
+# Subscribe to metric updates
+curl -X POST http://localhost:8082/subscriptions/subscribe \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"url": "http://your-callback/", "event_type": "hotel_waste_generated"}'
+
+# Unsubscribe
+curl -X POST http://localhost:8082/subscriptions/unsubscribe/1 \
+  -H "Authorization: Bearer $TOKEN"
+```
+
+Subscribed endpoints receive push notifications like:
+
+```json
+{
+  "id": 5,
+  "item_type": "hotel_waste_generated",
+  "last_value": 32.71,
+  "last_measured_at": "2025-10-28T00:00:00Z"
+}
+```
+
+#### Keycloak authentication
+
+Both APIs require a valid Bearer token. Keycloak is exposed on port `8083` in the dev stack. The `ecostars` realm is imported automatically on startup with the following defaults:
+
+| | |
+| --- | --- |
+| Admin console | `http://localhost:8083/admin` — `admin` / `admin` |
+| Client ID | `ecostars-client` |
+| Client Secret | `ecostars-secret` |
+| Test user | `testuser` / `password` |
+
+Obtain a token and use it:
+
+```bash
+export TOKEN=$(curl -s -X POST \
+  "http://localhost:8083/realms/ecostars/protocol/openid-connect/token" \
+  -H "Content-Type: application/x-www-form-urlencoded" \
+  -d "client_id=ecostars-client&client_secret=ecostars-secret" \
+  -d "username=testuser&password=password&grant_type=password" \
+  | jq -r '.access_token')
+
+curl -H "Authorization: Bearer $TOKEN" http://localhost:8081/hotels
+```
+
+---
+
+### Consumer — Ingestion Service
+
+A FastAPI microservice ([`services/consumer-client-stack/`](./services/consumer-client-stack/)) that persists data into PostgreSQL and exposes it through Metabase.
+
+![Consumer data infrastructure](services/consumer-client-stack/inner/static/image_b.png)
+
+The service exposes two ingestion endpoints:
+
+**`POST /consumer-ingestion/pull`** — on-demand bulk fetch. Calls the given URL, then upserts the returned hotels and measures into the database:
+
+```json
+{ "url": "http://host.docker.internal:8081/hotels" }
+```
+
+**`POST /consumer-ingestion/push`** — webhook for real-time metric updates, appended as immutable historical records:
+
+```json
+{
+  "id": 7,
+  "item_type": "hotel_energy_usage",
+  "last_value": 71.74,
+  "last_measured_at": "2026-02-23T00:00:00Z"
+}
+```
+
+The Metabase dashboard (port `3000`) queries the transactional database directly and provides charts for hotel counts, measures, and metric time series:
+
+![Metabase dashboard](services/consumer-client-stack/inner/static/metabase.png)
+
+| Service | URL |
+| --- | --- |
+| Ingestion Service | `http://localhost:8000` |
+| Swagger UI | `http://localhost:8000/docs` |
+| Metabase | `http://localhost:3000` |
+| PostgreSQL | `localhost:5440` |
 
 ## **Requirements**
 
