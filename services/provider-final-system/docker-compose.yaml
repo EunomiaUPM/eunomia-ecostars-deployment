@@ -25,6 +25,8 @@ services:
       KEYCLOAK_REALM: ecostars
       KEYCLOAK_CLIENT_ID: ecostars-client
     command: "serve"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     depends_on:
       - postgres
       - static-api-setup
@@ -51,6 +53,8 @@ services:
       KEYCLOAK_REALM: ecostars
       KEYCLOAK_CLIENT_ID: ecostars-client
     command: [ "metrics" ]
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     depends_on:
       - postgres
       - keycloak
@@ -68,8 +72,8 @@ services:
   keycloak:
     container_name: keycloak
     image: quay.io/keycloak/keycloak:26.1
-    entrypoint: ["/bin/bash"]
-    command: ["/tmp/start-keycloak.sh"]
+    entrypoint: [ "/bin/bash" ]
+    command: [ "/tmp/start-keycloak.sh" ]
     environment:
       KC_DB: postgres
       KC_DB_URL: jdbc:postgresql://keycloak-db:5432/keycloak

@@ -6,10 +6,10 @@ set -euo pipefail
 # ---------------------------------------------------------------------------
 DATA_SPACE_PROVIDER="${DATA_SPACE_PROVIDER:-http://127.0.0.1:1200}"
 #DATA_SPACE_PROVIDER=https://dev-dataspaces.dit.upm.es:1200
-STATIC_API="${STATIC_API:-http://127.0.0.1:8081}"
-DYNAMIC_API="${DYNAMIC_API:-http://127.0.0.1:8082}"
-#STATIC_API="${STATIC_API:-http://host.docker.internal:8081}"
-#DYNAMIC_API="${DYNAMIC_API:-http://host.docker.internal:8082}"
+# STATIC_API="${STATIC_API:-http://127.0.0.1:8081}"
+# DYNAMIC_API="${DYNAMIC_API:-http://127.0.0.1:8082}"
+STATIC_API="${STATIC_API:-http://host.docker.internal:8081}"
+DYNAMIC_API="${DYNAMIC_API:-http://host.docker.internal:8082}"
 OPTION="c"
 
 JSON_HEADER_CT="Content-Type: application/json"
@@ -156,7 +156,7 @@ CONN_PUSH_INST_PAYLOAD=$(jq \
   '.templateName = $name | .templateVersion = $version | .distributionId = $distId
    | .parameters.SUB_URL   = ($dynamicApi + "/subscriptions/subscribe")
    | .parameters.UNSUB_URL = ($dynamicApi + "/subscriptions/unsubscribe")' \
-  "${PAYLOADS_DIR}/10-connector-instance-push.json")
+  "${PAYLOADS_DIR}/10${OPTION}-connector-instance-push.json")
 
 provider_post "/api/v1/connector/instances" "${CONN_PUSH_INST_PAYLOAD}" | jq .
 

@@ -8,12 +8,12 @@
   },
   "dryRun": false,
   "parameters": {
-    "ACCESS_URL": "http://static-api:8081",
+    "ACCESS_URL": "http://host.docker.internal:8081",
     "ACCESS_METHODS": ["GET", "HEAD"],
     "ACCESS_HEADERS": { "Content-Type": "application/json" },
     "USER_NAME": "testuser",
     "USER_PASS": "password",
-    "TOKEN_URL": "http://localhost:8083/realms/ecostars/protocol/openid-connect/token",
+    "TOKEN_URL": "http://host.docker.internal:8083/realms/ecostars/protocol/openid-connect/token",
     "CLIENT_ID": "ecostars-client",
     "CLIENT_SECRET": "ecostars-secret"
   }

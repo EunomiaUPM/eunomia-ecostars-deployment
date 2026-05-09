@@ -1,0 +1,18 @@
+{
+  "templateName": "__CONN_PUSH_NAME__",
+  "templateVersion": "__CONN_PUSH_VERSION__",
+  "distributionId": "__DISTRIBUTION_PUSH_ID__",
+  "metadata": {
+    "description": "Connector to push data to a dynamic API",
+    "ownerId": "ECOSTARS"
+  },
+  "parameters": {
+    "SUB_URL": "__DYNAMIC_API__/subscriptions/subscribe",
+    "UNSUB_URL": "__DYNAMIC_API__/subscriptions/unsubscribe",
+    "USER_NAME": "testuser",
+    "USER_PASS": "password",
+    "TOKEN_URL": "http://host.docker.internal:8083/realms/ecostars/protocol/openid-connect/token",
+    "CLIENT_ID": "ecostars-client",
+    "CLIENT_SECRET": "ecostars-secret"
+  }
+}
