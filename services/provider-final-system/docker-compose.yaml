@@ -69,7 +69,7 @@ services:
     container_name: keycloak
     image: quay.io/keycloak/keycloak:26.1
     entrypoint: ["/bin/bash"]
-    command: ["/opt/keycloak/scripts/start-keycloak.sh"]
+    command: ["/tmp/start-keycloak.sh"]
     environment:
       KC_DB: postgres
       KC_DB_URL: jdbc:postgresql://keycloak-db:5432/keycloak
@@ -81,7 +81,7 @@ services:
       - "8083:8080"
     volumes:
       - ./inner/config/keycloak/fast-setup-realm.json:/opt/keycloak/data/import/realm.json
-      - ./inner/config/keycloak/start-keycloak.sh:/opt/keycloak/scripts/start-keycloak.sh
+      - ./inner/config/keycloak/start-keycloak.sh:/tmp/start-keycloak.sh
     depends_on:
       - keycloak-db
 
