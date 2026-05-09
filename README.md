@@ -69,7 +69,7 @@ The script creates the full catalog in one shot: dataset → distributions (pull
 
 This deployment orchestrates two layers of components: the dataspace infrastructure provided by Eunomia, and the Ecostars-specific services that exercise the pilot.
 
-![Full system architecture](services/consumer-client-stack/inner/static/image_a.png)
+![Full system architecture](static/docs/image_a.png)
 
 ### Dataspace layer (Eunomia)
 
@@ -167,7 +167,7 @@ curl -H "Authorization: Bearer $TOKEN" http://localhost:8081/hotels
 
 A FastAPI microservice ([`services/consumer-client-stack/`](./services/consumer-client-stack/)) that persists data into PostgreSQL and exposes it through Metabase.
 
-![Consumer data infrastructure](services/consumer-client-stack/inner/static/image_b.png)
+![Consumer data infrastructure](static/docs/image_b.png)
 
 The service exposes two ingestion endpoints:
 
@@ -190,7 +190,7 @@ The service exposes two ingestion endpoints:
 
 The Metabase dashboard (port `3000`) queries the transactional database directly and provides charts for hotel counts, measures, and metric time series:
 
-![Metabase dashboard](services/consumer-client-stack/inner/static/metabase.png)
+![Metabase dashboard](static/docs/metabase.png)
 
 | Service | URL |
 | --- | --- |
