@@ -4,8 +4,8 @@ set -euo pipefail
 # ---------------------------------------------------------------------------
 # Configuration
 # ---------------------------------------------------------------------------
-DATA_SPACE_PROVIDER="${DATA_SPACE_PROVIDER:-http://127.0.0.1:1200}"
-#DATA_SPACE_PROVIDER=https://dev-dataspaces.dit.upm.es:1200
+# DATA_SPACE_PROVIDER="${DATA_SPACE_PROVIDER:-http://127.0.0.1:1200}"
+DATA_SPACE_PROVIDER=https://eunomia-provider.dit.upm.es
 # STATIC_API="${STATIC_API:-http://127.0.0.1:8081}"
 # DYNAMIC_API="${DYNAMIC_API:-http://127.0.0.1:8082}"
 STATIC_API="${STATIC_API:-http://host.docker.internal:8081}"

@@ -1,6 +1,6 @@
 {
   "dctTitle": "Distribution of my dataset",
-  "dctDescription": "This is the distribution of my dataset",
+  "dctDescription": "HTTP Pull distribution providing on-demand access to the ECOSTARS dataset via a configurable data service endpoint. Consumers can retrieve data by issuing HTTP requests to the associated access URL.",
   "dcatAccessService": "__DATA_SERVICE_ID__",
   "datasetId": "__DATASET_ID__",
   "dctFormats": "HTTP_PULL"

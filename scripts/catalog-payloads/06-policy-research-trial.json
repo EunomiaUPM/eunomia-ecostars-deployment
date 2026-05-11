@@ -7,12 +7,12 @@
           {
             "leftOperand": "dateTime",
             "operator": "gteq",
-            "rightOperand": "2025-03-01T00:00:00Z"
+            "rightOperand": "2026-03-01T00:00:00Z"
           },
           {
             "leftOperand": "dateTime",
             "operator": "lteq",
-            "rightOperand": "2025-09-01T00:00:00Z"
+            "rightOperand": "2026-09-01T00:00:00Z"
           },
           {
             "leftOperand": "purpose",
@@ -41,5 +41,5 @@
   },
   "entityId": "__DATASET_ID__",
   "entityType": "Dataset",
-  "description": "Research trial access (Mar–Sep 2025): read-only, limited to 10 000 requests, restricted to research purposes. Redistribution and reproduction are prohibited."
+  "description": "Research trial access (Mar–Sep 2026): read-only, limited to 10 000 requests, restricted to research purposes. Redistribution and reproduction are prohibited."
 }

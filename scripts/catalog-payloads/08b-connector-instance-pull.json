@@ -3,7 +3,7 @@
   "templateVersion": "__CONN_PULL_VERSION__",
   "distributionId": "__DISTRIBUTION_PULL_ID__",
   "metadata": {
-    "description": "Connector to pull data from a static API",
+    "description": "HTTP Pull connector instance authenticated with a Bearer token. Retrieves dataset content from a static API endpoint, attaching the provided token to each request for authorization.",
     "ownerId": "ECOSTARS"
   },
   "dryRun": false,

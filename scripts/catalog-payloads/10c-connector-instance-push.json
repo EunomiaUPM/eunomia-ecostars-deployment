@@ -3,7 +3,7 @@
   "templateVersion": "__CONN_PUSH_VERSION__",
   "distributionId": "__DISTRIBUTION_PUSH_ID__",
   "metadata": {
-    "description": "Connector to push data to a dynamic API",
+    "description": "HTTP Push connector instance authenticated via OAuth2 password grant. Subscribes to a dynamic API event stream by obtaining tokens from the configured identity provider and forwards incoming data events to the consumer's ingress endpoint.",
     "ownerId": "ECOSTARS"
   },
   "parameters": {
