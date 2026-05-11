@@ -30,6 +30,8 @@ services:
           "max_lease_ttl": "720h"
         }
     command: server
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
 
   provider-db:
     container_name: "provider-db"
@@ -37,6 +39,8 @@ services:
     restart: always
     env_file:
       - ./../../static/envs/provider/db.env
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
 
   provider-redis:
     image: redis:alpine
@@ -48,6 +52,8 @@ services:
       redis-server
       --requirepass ds_core_provider_redis
       --user admin on >ds_core_provider_redis ~* +@all
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
 
   # =========================
   # Setup job (one-shot)
@@ -68,6 +74,8 @@ services:
     env_file:
       - ./../../static/envs/provider/core.env
     restart: "no"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
 
   # =========================
   # Main service
