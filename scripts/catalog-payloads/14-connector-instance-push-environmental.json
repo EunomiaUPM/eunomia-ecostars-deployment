@@ -1,0 +1,14 @@
+{
+  "templateName": "__CONN_PUSH_NAME__",
+  "templateVersion": "__CONN_PUSH_VERSION__",
+  "distributionId": "__DISTRIBUTION_PUSH_ENVIRONMENTAL_ID__",
+  "metadata": {
+    "description": "HTTP Push connector (Bearer token) for ECOSTARS environmental KPI events. Subscribes to esds_environmental_updated at POST /esds/environmental/subscription and unsubscribes via DELETE /esds/environmental/subscription/{id}.",
+    "ownerId": "ECOSTARS"
+  },
+  "parameters": {
+    "SUB_URL": "__ESDS_API__/esds/environmental/subscription",
+    "EVENT_TYPE": "esds_environmental_updated",
+    "TOKEN": "__API_KEY__"
+  }
+}

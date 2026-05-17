@@ -1,0 +1,5 @@
+{
+  "dctTitle": "ECOSTARS Environmental Sustainability Dataset",
+  "dctDescription": "Hotel environmental KPIs: energy consumption (kWh), water usage (m³), waste generation (kg) and CO₂ emissions (tCO₂eq, scopes 1–3), aggregated by annual or monthly reporting period.",
+  "catalogId": "__CATALOG_ID__"
+}

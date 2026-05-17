@@ -1,0 +1,615 @@
+openapi: 3.1.0
+info:
+  title: ECOSTARS ESDS API
+  version: 0.3.0
+  summary: Hotel sustainability data sharing (environmental + social) for the ECOSTARS data space.
+  description: |
+    API for sharing hotel sustainability KPIs across two use cases:
+
+    - **Environmental sustainability**: energy, water, waste and CO₂ emissions.
+    - **Social sustainability**: workforce composition, turnover and pay equity.
+
+    Each use case exposes:
+
+    - A `GET` endpoint to retrieve the **static snapshot** of all hotel records.
+    - A `POST .../subscription` endpoint to **subscribe** to real-time events;
+      the provider will push event payloads to the subscriber's `url`.
+    - A `DELETE .../subscription/{id}` endpoint to **unsubscribe**.
+
+    The subscription contract follows the GING-DIT-UPM PubSub pattern
+    (subscription = `{url, event_type}`), with one event type per use case:
+
+    | Use case      | `event_type`                  |
+    |---------------|-------------------------------|
+    | Environmental | `esds_environmental_updated`  |
+    | Social        | `esds_social_updated`         |
+
+    Conventions:
+
+    - `period` is a half-open date range in PostgreSQL range literal syntax:
+      `[YYYY-MM-DD,YYYY-MM-DD)` — lower bound inclusive, upper bound exclusive.
+    - Per-room-night ratios are denoted `*RN` (RN = room nights).
+    - Benchmark values (`benchmarkRating*RN`) reflect comparable peer hotels;
+      they are not currently emitted for social KPIs.
+    - **Nullability**: most KPI fields, as well as `chain_uuid`, `chain_name`
+      and `region`, are nullable — the server emits `null` when a value is
+      not (yet) reported. Identifying fields (`hotel_uuid`, value `uuid`,
+      `period`, `periodicity`, `country_slug`, `category_slug`, `zip`,
+      `hotel_name`, `lat`, `lon`) are always present and non-null.
+    - Authentication is `Authorization: Bearer <api_key>`.
+  contact:
+    name: ECOSTARS
+    url: https://ecostars.ai
+  license:
+    name: Proprietary
+
+servers:
+  - url: https://api.ecostars.ai
+    description: Production
+  - url: https://staging-api.ecostars.ai
+    description: Staging
+
+tags:
+  - name: environmental
+    description: Environmental sustainability KPIs (energy, water, waste, CO₂).
+  - name: social
+    description: Social sustainability KPIs (workforce, turnover, pay equity).
+  - name: subscriptions
+    description: Real-time event subscriptions (push to subscriber URL).
+
+paths:
+  # ─────────────────────────── Environmental ───────────────────────────
+  /esds/environmental:
+    get:
+      tags: [environmental]
+      summary: Retrieve environmental sustainability snapshot
+      description: Returns the current static snapshot of environmental KPIs for all reporting hotels.
+      operationId: getEnvironmentalSnapshot
+      parameters:
+        - $ref: "#/components/parameters/ChainUuidFilter"
+        - $ref: "#/components/parameters/CountryFilter"
+        - $ref: "#/components/parameters/PeriodicityFilter"
+      responses:
+        "200":
+          description: Environmental snapshot.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/EnvironmentalHotelRecord"
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "500": { $ref: "#/components/responses/InternalError" }
+
+  /esds/environmental/subscription:
+    post:
+      tags: [environmental, subscriptions]
+      summary: Subscribe to environmental real-time events
+      description: |
+        Registers a subscription that will push `EnvironmentalHotelRecord`
+        payloads to the supplied `url` whenever the underlying data changes.
+        The `event_type` is implicitly fixed to `esds_environmental_updated`
+        for this endpoint; if provided in the body it MUST match.
+      operationId: createEnvironmentalSubscription
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EnvironmentalSubscriptionRequest"
+      responses:
+        "201":
+          description: Subscription created.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Subscription"
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "500": { $ref: "#/components/responses/InternalError" }
+      callbacks:
+        environmentalEvent:
+          "{$request.body#/url}":
+            post:
+              summary: Push of an environmental KPI update
+              requestBody:
+                required: true
+                content:
+                  application/json:
+                    schema:
+                      $ref: "#/components/schemas/EnvironmentalEvent"
+              responses:
+                "204": { description: Event acknowledged. }
+
+  /esds/environmental/subscription/{id}:
+    delete:
+      tags: [environmental, subscriptions]
+      summary: Cancel an environmental subscription
+      operationId: deleteEnvironmentalSubscription
+      parameters:
+        - $ref: "#/components/parameters/SubscriptionId"
+      responses:
+        "204": { description: Subscription cancelled. }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "500": { $ref: "#/components/responses/InternalError" }
+
+  # ───────────────────────────── Social ─────────────────────────────
+  /esds/social:
+    get:
+      tags: [social]
+      summary: Retrieve social sustainability snapshot
+      description: Returns the current static snapshot of social KPIs for all reporting hotels.
+      operationId: getSocialSnapshot
+      parameters:
+        - $ref: "#/components/parameters/ChainUuidFilter"
+        - $ref: "#/components/parameters/CountryFilter"
+        - $ref: "#/components/parameters/PeriodicityFilter"
+      responses:
+        "200":
+          description: Social snapshot.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/SocialHotelRecord"
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "500": { $ref: "#/components/responses/InternalError" }
+
+  /esds/social/subscription:
+    post:
+      tags: [social, subscriptions]
+      summary: Subscribe to social real-time events
+      description: |
+        Registers a subscription that will push `SocialHotelRecord` payloads
+        to the supplied `url` whenever the underlying data changes. The
+        `event_type` is implicitly fixed to `esds_social_updated` for this
+        endpoint; if provided in the body it MUST match.
+      operationId: createSocialSubscription
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SocialSubscriptionRequest"
+      responses:
+        "201":
+          description: Subscription created.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Subscription"
+        "400": { $ref: "#/components/responses/BadRequest" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "500": { $ref: "#/components/responses/InternalError" }
+      callbacks:
+        socialEvent:
+          "{$request.body#/url}":
+            post:
+              summary: Push of a social KPI update
+              requestBody:
+                required: true
+                content:
+                  application/json:
+                    schema:
+                      $ref: "#/components/schemas/SocialEvent"
+              responses:
+                "204": { description: Event acknowledged. }
+
+  /esds/social/subscription/{id}:
+    delete:
+      tags: [social, subscriptions]
+      summary: Cancel a social subscription
+      operationId: deleteSocialSubscription
+      parameters:
+        - $ref: "#/components/parameters/SubscriptionId"
+      responses:
+        "204": { description: Subscription cancelled. }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+        "404": { $ref: "#/components/responses/NotFound" }
+        "500": { $ref: "#/components/responses/InternalError" }
+
+components:
+  parameters:
+    SubscriptionId:
+      name: id
+      in: path
+      required: true
+      description: Subscription identifier returned at creation time.
+      schema:
+        type: string
+        format: uuid
+    ChainUuidFilter:
+      name: chain_uuid
+      in: query
+      required: false
+      description: Filter records by hotel chain identifier.
+      schema:
+        type: string
+        format: uuid
+    CountryFilter:
+      name: country_slug
+      in: query
+      required: false
+      description: Filter records by ISO-3166-alpha-2 country code.
+      schema:
+        type: string
+        minLength: 2
+        maxLength: 2
+        pattern: "^[A-Z]{2}$"
+    PeriodicityFilter:
+      name: periodicity
+      in: query
+      required: false
+      description: Filter aggregated values by reporting periodicity.
+      schema:
+        $ref: "#/components/schemas/Periodicity"
+
+  responses:
+    BadRequest:
+      description: Malformed request.
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+    Unauthorized:
+      description: Authentication required or invalid credentials.
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+    NotFound:
+      description: Resource not found.
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+    InternalError:
+      description: Unexpected server error.
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+
+  schemas:
+    # ── shared primitives ───────────────────────────────────────────
+    Periodicity:
+      type: string
+      enum: [year, month]
+      description: Aggregation granularity of the value block.
+
+    PeriodRange:
+      type: string
+      description: |
+        Half-open date range in PostgreSQL range literal syntax.
+        Lower bound inclusive (`[`), upper bound exclusive (`)`).
+      pattern: '^\[\d{4}-\d{2}-\d{2},\d{4}-\d{2}-\d{2}\)$'
+      examples:
+        - "[2025-01-01,2026-01-01)"
+        - "[2025-10-01,2025-11-01)"
+
+    EventType:
+      type: string
+      enum:
+        - esds_environmental_updated
+        - esds_social_updated
+      description: |
+        Event type emitted by the provider.
+        - `esds_environmental_updated`: payload conforms to `EnvironmentalHotelRecord`.
+        - `esds_social_updated`: payload conforms to `SocialHotelRecord`.
+
+    NullableNonNegativeNumber:
+      type: [number, "null"]
+      format: double
+      minimum: 0
+      description: Non-negative KPI value, or `null` when not reported.
+
+    NullableRatio01:
+      type: [number, "null"]
+      format: double
+      minimum: 0
+      maximum: 1
+      description: Ratio in [0, 1], or `null` when not reported.
+
+    # ── hotel records ───────────────────────────────────────────────
+    HotelIdentity:
+      type: object
+      description: |
+        Identifying and locational metadata for a hotel.
+
+        `chain_uuid`, `chain_name` and `region` are nullable: independent
+        hotels have no chain, and `region` is not populated for every record.
+      required:
+        - hotel_uuid
+        - hotel_name
+        - lat
+        - lon
+        - chain_uuid
+        - chain_name
+        - country_slug
+        - category_slug
+        - zip
+        - region
+      properties:
+        hotel_uuid:
+          type: string
+          format: uuid
+          description: Identifier of the hotel.
+        hotel_name:
+          type: string
+        lat:
+          type: number
+          format: double
+          minimum: -90
+          maximum: 90
+          description: Hotel latitude (WGS84).
+        lon:
+          type: number
+          format: double
+          minimum: -180
+          maximum: 180
+          description: Hotel longitude (WGS84).
+        chain_uuid:
+          type: [string, "null"]
+          format: uuid
+          description: Chain identifier, or `null` for independent hotels.
+        chain_name:
+          type: [string, "null"]
+          description: Chain name, or `null` for independent hotels.
+        country_slug:
+          type: string
+          minLength: 2
+          maxLength: 2
+          pattern: "^[A-Z]{2}$"
+          description: ISO-3166-alpha-2 country code.
+        category_slug:
+          type: string
+          description: |
+            Hotel category descriptor. In the current deployment this is the
+            star rating as a numeric string (e.g. `"1"`, `"2"`, `"4"`).
+        zip:
+          type: string
+          description: Postal code.
+        region:
+          type: [string, "null"]
+          description: Region descriptor, or `null` when not populated.
+
+    EnvironmentalValue:
+      type: object
+      description: |
+        Environmental KPIs for a single reporting period. The `uuid` identifies
+        this period record; nearly every metric is nullable because hotels
+        report at different cadences and completeness.
+      required: [uuid, periodicity, period]
+      properties:
+        uuid:
+          type: string
+          format: uuid
+          description: Identifier of the value record (annual or monthly).
+        periodicity:
+          $ref: "#/components/schemas/Periodicity"
+        period:
+          $ref: "#/components/schemas/PeriodRange"
+        energyTotalKwh:
+          allOf: [{ $ref: "#/components/schemas/NullableNonNegativeNumber" }]
+          description: Total energy consumption for the period (kWh).
+        ratingEnergyRN:
+          allOf: [{ $ref: "#/components/schemas/NullableNonNegativeNumber" }]
+          description: Energy consumption per room night (kWh / RN).
+        benchmarkRatingEnergyRN:
+          allOf: [{ $ref: "#/components/schemas/NullableNonNegativeNumber" }]
+          description: Peer benchmark for energy per room night (kWh / RN).
+        waterM3:
+          allOf: [{ $ref: "#/components/schemas/NullableNonNegativeNumber" }]
+          description: Total water consumption for the period (m³).
+        ratingWaterRN:
+          allOf: [{ $ref: "#/components/schemas/NullableNonNegativeNumber" }]
+          description: Water consumption per room night (m³ / RN).
+        benchmarkRatingWaterRN:
+          allOf: [{ $ref: "#/components/schemas/NullableNonNegativeNumber" }]
+          description: Peer benchmark for water per room night (m³ / RN).
+        wasteKg:
+          allOf: [{ $ref: "#/components/schemas/NullableNonNegativeNumber" }]
+          description: Total waste generated for the period (kg).
+        ratingWasteRN:
+          allOf: [{ $ref: "#/components/schemas/NullableNonNegativeNumber" }]
+          description: Waste generation per room night (kg / RN).
+        benchmarkRatingWasteRN:
+          allOf: [{ $ref: "#/components/schemas/NullableNonNegativeNumber" }]
+          description: Peer benchmark for waste per room night (kg / RN).
+        scope1Emissions:
+          allOf: [{ $ref: "#/components/schemas/NullableNonNegativeNumber" }]
+          description: Scope 1 CO₂ emissions for the period (tCO₂eq).
+        scope2Emissions:
+          allOf: [{ $ref: "#/components/schemas/NullableNonNegativeNumber" }]
+          description: Scope 2 CO₂ emissions for the period (tCO₂eq).
+        scope3Emissions:
+          allOf: [{ $ref: "#/components/schemas/NullableNonNegativeNumber" }]
+          description: Scope 3 CO₂ emissions for the period (tCO₂eq).
+        co2Emissions:
+          allOf: [{ $ref: "#/components/schemas/NullableNonNegativeNumber" }]
+          description: Combined Scope 1 + Scope 2 CO₂ emissions (tCO₂eq).
+        ratingCO2RN:
+          allOf: [{ $ref: "#/components/schemas/NullableNonNegativeNumber" }]
+          description: CO₂ (Scope 1 + 2) per room night.
+        benchmarkRatingCO2RN:
+          allOf: [{ $ref: "#/components/schemas/NullableNonNegativeNumber" }]
+          description: Peer benchmark for CO₂ (Scope 1 + 2) per room night.
+
+    EnvironmentalHotelRecord:
+      allOf:
+        - $ref: "#/components/schemas/HotelIdentity"
+        - type: object
+          required: [values]
+          properties:
+            values:
+              type: array
+              description: Environmental KPI series, one entry per reporting period.
+              items:
+                $ref: "#/components/schemas/EnvironmentalValue"
+
+    SocialValue:
+      type: object
+      description: Social KPIs for a single reporting period.
+      required: [uuid, periodicity, period]
+      properties:
+        uuid:
+          type: string
+          format: uuid
+          description: Identifier of the value record.
+        periodicity:
+          $ref: "#/components/schemas/Periodicity"
+        period:
+          $ref: "#/components/schemas/PeriodRange"
+        absenteeismRate:
+          allOf: [{ $ref: "#/components/schemas/NullableRatio01" }]
+          description: Absenteeism ratio over worked days (0–1).
+        turnoverRate:
+          allOf: [{ $ref: "#/components/schemas/NullableNonNegativeNumber" }]
+          description: Overall staff turnover ratio.
+        voluntaryTurnoverRate:
+          allOf: [{ $ref: "#/components/schemas/NullableNonNegativeNumber" }]
+          description: Voluntary staff turnover ratio.
+        involuntaryTurnoverRate:
+          allOf: [{ $ref: "#/components/schemas/NullableNonNegativeNumber" }]
+          description: Involuntary staff turnover / dismissal ratio.
+        retirementTurnoverRate:
+          allOf: [{ $ref: "#/components/schemas/NullableNonNegativeNumber" }]
+          description: Staff turnover due to retirement.
+        femaleHeadcountShare:
+          allOf: [{ $ref: "#/components/schemas/NullableRatio01" }]
+          description: Share of women in the overall workforce (0–1).
+        femaleManagementHeadcountShare:
+          allOf: [{ $ref: "#/components/schemas/NullableRatio01" }]
+          description: Share of women in management positions (0–1).
+        genderPayGap:
+          type: [number, "null"]
+          format: double
+          description: |
+            Gender pay gap. `0` denotes pay parity; positive values indicate
+            how many times more men earn relative to women. Nullable.
+        wageInequalityRatio:
+          allOf: [{ $ref: "#/components/schemas/NullableNonNegativeNumber" }]
+          description: Internal wage inequality ratio (P90 / P10).
+        meanHourlyWage:
+          allOf: [{ $ref: "#/components/schemas/NullableNonNegativeNumber" }]
+          description: Mean hourly wage across employees.
+
+    SocialHotelRecord:
+      allOf:
+        - $ref: "#/components/schemas/HotelIdentity"
+        - type: object
+          required: [values]
+          properties:
+            values:
+              type: array
+              description: Social KPI series, one entry per reporting period.
+              items:
+                $ref: "#/components/schemas/SocialValue"
+
+    # ── subscriptions ───────────────────────────────────────────────
+    SubscriptionRequestBase:
+      type: object
+      required: [url]
+      properties:
+        url:
+          type: string
+          format: uri
+          description: HTTPS URL to which the provider will POST event payloads.
+          example: https://consumer.example.org/ecostars/webhook
+        event_type:
+          $ref: "#/components/schemas/EventType"
+
+    EnvironmentalSubscriptionRequest:
+      allOf:
+        - $ref: "#/components/schemas/SubscriptionRequestBase"
+        - type: object
+          properties:
+            event_type:
+              type: string
+              enum: [esds_environmental_updated]
+              description: |
+                Optional in the request body. If supplied it MUST equal
+                `esds_environmental_updated`; otherwise the server returns 400.
+
+    SocialSubscriptionRequest:
+      allOf:
+        - $ref: "#/components/schemas/SubscriptionRequestBase"
+        - type: object
+          properties:
+            event_type:
+              type: string
+              enum: [esds_social_updated]
+              description: |
+                Optional in the request body. If supplied it MUST equal
+                `esds_social_updated`; otherwise the server returns 400.
+
+    Subscription:
+      type: object
+      required: [id, url, event_type, created_at, status]
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Subscription identifier; use in DELETE to cancel.
+        url:
+          type: string
+          format: uri
+        event_type:
+          $ref: "#/components/schemas/EventType"
+        created_at:
+          type: string
+          format: date-time
+        status:
+          type: string
+          enum: [active, paused, cancelled]
+
+    # ── event payloads pushed to the subscriber ─────────────────────
+    EnvironmentalEvent:
+      type: object
+      required: [event_type, occurred_at, data]
+      properties:
+        event_type:
+          type: string
+          enum: [esds_environmental_updated]
+        occurred_at:
+          type: string
+          format: date-time
+          description: Provider-side timestamp at which the change was registered.
+        data:
+          $ref: "#/components/schemas/EnvironmentalHotelRecord"
+
+    SocialEvent:
+      type: object
+      required: [event_type, occurred_at, data]
+      properties:
+        event_type:
+          type: string
+          enum: [esds_social_updated]
+        occurred_at:
+          type: string
+          format: date-time
+          description: Provider-side timestamp at which the change was registered.
+        data:
+          $ref: "#/components/schemas/SocialHotelRecord"
+
+    Error:
+      type: object
+      required: [code, message]
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        details:
+          type: object
+          additionalProperties: true
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: opaque
+      description: API key transported as an opaque bearer token.
+
+security:
+  - bearerAuth: []

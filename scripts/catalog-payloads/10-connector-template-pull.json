@@ -19,7 +19,7 @@
     {
       "paramType": "STRING",
       "name": "ACCESS_URL",
-      "title": "Url",
+      "title": "URL",
       "required": true
     },
     {
@@ -37,7 +37,7 @@
     {
       "paramType": "STRING",
       "name": "TOKEN",
-      "title": "Token",
+      "title": "Bearer Token",
       "required": true
     }
   ]

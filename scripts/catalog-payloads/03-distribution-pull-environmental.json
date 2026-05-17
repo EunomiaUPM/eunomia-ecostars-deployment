@@ -1,0 +1,7 @@
+{
+  "dctTitle": "Environmental Sustainability — HTTP Pull",
+  "dctDescription": "On-demand snapshot of environmental KPIs via GET /esds/environmental. Returns the full hotel list as a JSON array; each entry contains identity metadata and a time-series of period-level KPI values.",
+  "dcatAccessService": "__DATA_SERVICE_ID__",
+  "datasetId": "__DATASET_ENVIRONMENTAL_ID__",
+  "dctFormats": "HTTP_PULL"
+}

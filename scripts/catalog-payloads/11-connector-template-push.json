@@ -12,13 +12,13 @@
       "protocol": "HTTP",
       "urlTemplate": "{{__SUB_URL__}}",
       "method": "POST",
-      "headers": {},
-      "bodyTemplate": "{\"url\": \"{{__SYS_OWN_URL_DOCKER__}}{{__RUNTIME_INGRESS__}}\", \"event_type\": \"hotel_waste_generated\"}"
+      "headers": { "Content-Type": "application/json" },
+      "bodyTemplate": "{\"url\": \"{{__SYS_OWN_URL_DOCKER__}}{{__RUNTIME_INGRESS__}}\", \"event_type\": \"{{__EVENT_TYPE__}}\"}"
     },
     "unsubscribe": {
       "protocol": "HTTP",
-      "urlTemplate": "{{__UNSUB_URL__}}/{{__RUNTIME_JSON_{.subscription.data.ID}__}}",
-      "method": "POST",
+      "urlTemplate": "{{__SUB_URL__}}/{{__RUNTIME_JSON_{.subscription.id}__}}",
+      "method": "DELETE",
       "headers": {},
       "bodyTemplate": "{}"
     }
@@ -27,13 +27,19 @@
     {
       "paramType": "STRING",
       "name": "SUB_URL",
-      "title": "Subscription URL",
+      "title": "Subscription base URL",
       "required": true
     },
     {
       "paramType": "STRING",
-      "name": "UNSUB_URL",
-      "title": "Unsubscription URL",
+      "name": "EVENT_TYPE",
+      "title": "Event Type",
+      "required": true
+    },
+    {
+      "paramType": "STRING",
+      "name": "TOKEN",
+      "title": "Bearer Token",
       "required": true
     }
   ]

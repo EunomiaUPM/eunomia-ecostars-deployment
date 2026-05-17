@@ -1,0 +1,7 @@
+{
+  "dctTitle": "Social Sustainability — HTTP Pull",
+  "dctDescription": "On-demand snapshot of social KPIs via GET /esds/social. Returns the full hotel list as a JSON array; each entry contains identity metadata and a time-series of period-level KPI values.",
+  "dcatAccessService": "__DATA_SERVICE_ID__",
+  "datasetId": "__DATASET_SOCIAL_ID__",
+  "dctFormats": "HTTP_PULL"
+}

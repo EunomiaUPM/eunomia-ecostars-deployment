@@ -1,0 +1,16 @@
+{
+  "templateName": "__CONN_PULL_NAME__",
+  "templateVersion": "__CONN_PULL_VERSION__",
+  "distributionId": "__DISTRIBUTION_PULL_ENVIRONMENTAL_ID__",
+  "metadata": {
+    "description": "HTTP Pull connector (Bearer token) for ECOSTARS environmental KPIs. Issues GET /esds/environmental against the ESDS API and returns the full environmental snapshot.",
+    "ownerId": "ECOSTARS"
+  },
+  "dryRun": false,
+  "parameters": {
+    "ACCESS_URL": "__ESDS_API__/esds/environmental",
+    "ACCESS_METHODS": ["GET"],
+    "ACCESS_HEADERS": { "Accept": "application/json" },
+    "TOKEN": "__API_KEY__"
+  }
+}
