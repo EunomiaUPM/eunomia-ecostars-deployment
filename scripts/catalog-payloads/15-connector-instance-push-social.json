@@ -7,7 +7,7 @@
     "ownerId": "ECOSTARS"
   },
   "parameters": {
-    "SUB_URL": "__ESDS_API__/esds/social/subscription",
+    "SUB_URL": "__ESDS_API__/social/subscription",
     "EVENT_TYPE": "esds_social_updated",
     "TOKEN": "__API_KEY__"
   }

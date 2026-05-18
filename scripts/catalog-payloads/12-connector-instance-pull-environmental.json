@@ -8,7 +8,7 @@
   },
   "dryRun": false,
   "parameters": {
-    "ACCESS_URL": "__ESDS_API__/esds/environmental",
+    "ACCESS_URL": "__ESDS_API__/environmental",
     "ACCESS_METHODS": ["GET"],
     "ACCESS_HEADERS": { "Accept": "application/json" },
     "TOKEN": "__API_KEY__"
