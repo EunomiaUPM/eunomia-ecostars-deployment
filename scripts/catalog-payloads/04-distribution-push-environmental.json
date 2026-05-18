@@ -1,5 +1,5 @@
 {
-  "dctTitle": "Environmental Sustainability — HTTP Push",
+  "dctTitle": "Environmental Sustainability - HTTP Push",
   "dctDescription": "Real-time event stream for environmental KPI updates. The provider POSTs esds_environmental_updated events to the subscriber's callback URL whenever the underlying dataset changes.",
   "dcatAccessService": "__DATA_SERVICE_ID__",
   "datasetId": "__DATASET_ENVIRONMENTAL_ID__",

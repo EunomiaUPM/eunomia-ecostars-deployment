@@ -1,5 +1,5 @@
 {
-  "dctTitle": "Social Sustainability — HTTP Push",
+  "dctTitle": "Social Sustainability - HTTP Push",
   "dctDescription": "Real-time event stream for social KPI updates. The provider POSTs esds_social_updated events to the subscriber's callback URL whenever the underlying dataset changes.",
   "dcatAccessService": "__DATA_SERVICE_ID__",
   "datasetId": "__DATASET_SOCIAL_ID__",

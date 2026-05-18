@@ -2,9 +2,9 @@
 set -euo pipefail
 source "$(dirname "$0")/lib.sh"
 
-# CONSUMER_URL   — URL del consumer (por defecto: lib.sh)
-# PROVIDER_URL   — URL del provider (por defecto: lib.sh)
-# PROVIDER_SLUG  — slug del provider (por defecto: "provider")
+# CONSUMER_URL   - URL del consumer (por defecto: lib.sh)
+# PROVIDER_URL   - URL del provider (por defecto: lib.sh)
+# PROVIDER_SLUG  - slug del provider (por defecto: "provider")
 PROVIDER_SLUG="${PROVIDER_SLUG:-provider}"
 
 log_step "Authenticating consumer with provider ($PROVIDER_SLUG)"
