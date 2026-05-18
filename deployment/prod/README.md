@@ -8,10 +8,10 @@ This folder contains the production deployment for the Eunomia framework. Unlike
 
 There are two independent components you can deploy:
 
-| Component | Role | Guide |
-|---|---|---|
-| **Heimdall** | Dataspace Authority — manages participants, issues credentials, and enforces governance policies | [heimdall.md](./heimdall.md) |
-| **Agent** | Participant node — acts as a data provider, consumer, or both within the dataspace | [agent.md](./agent.md) |
+| Component    | Role                                                                                             | Guide                        |
+| ------------ | ------------------------------------------------------------------------------------------------ | ---------------------------- |
+| **Heimdall** | Dataspace Authority - manages participants, issues credentials, and enforces governance policies | [heimdall.md](./heimdall.md) |
+| **Agent**    | Participant node - acts as a data provider, consumer, or both within the dataspace               | [agent.md](./agent.md)       |
 
 Each component has its own Docker Compose file and its own Vault instance. They can be deployed on separate servers or on the same machine.
 
@@ -37,7 +37,7 @@ Each component has its own Docker Compose file and its own Vault instance. They 
 
 ## Prerequisites: Walt.id Wallet
 
-Both components depend on the **public walt.id wallet API** — no local deployment is required. Production credentials in `wallet.json` must point to real accounts registered on the public walt.id platform.
+Both components depend on the **public walt.id wallet API** - no local deployment is required. Production credentials in `wallet.json` must point to real accounts registered on the public walt.id platform.
 
 > [!IMPORTANT]
 > The example `wallet.json` files in `/vault/*/secrets/` reference existing test accounts and **will not work in production**. You must replace them with credentials from your own walt.id accounts before launching.

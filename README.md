@@ -8,7 +8,7 @@
 [![GAIA-X](https://img.shields.io/badge/GAIA--X-Compliant-00A86B?logo=data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHBhdGggZmlsbD0id2hpdGUiIGQ9Ik0xMiAyTDIgN2wxMCA1IDEwLTV6TTIgMTdsOCA0IDgtNFYxMmwtOCA0LTgtNHoiLz48L3N2Zz4=&logoColor=white)](https://gaia-x.eu/)
 [![DSP](https://img.shields.io/badge/Protocol-DSP-orange)](https://docs.internationaldataspaces.org/ids-knowledgebase/v/dataspace-protocol)
 
-This repository contains the artifacts and scripts to deploy and test the **Ecostars** pilot on top of the **Eunomia** dataspace framework. The pilot models a sustainability-data exchange: the **Provider** is the live ECOSTARS ESDS API publishing hotel sustainability metrics across two use cases — environmental and social — and a **Consumer** ingests them, both as participants of an Eunomia-governed dataspace.
+This repository contains the artifacts and scripts to deploy and test the **Ecostars** pilot on top of the **Eunomia** dataspace framework. The pilot models a sustainability-data exchange: the **Provider** is the live ECOSTARS ESDS API publishing hotel sustainability metrics across two use cases - environmental and social - and a **Consumer** ingests them, both as participants of an Eunomia-governed dataspace.
 
 ---
 
@@ -16,19 +16,19 @@ This repository contains the artifacts and scripts to deploy and test the **Ecos
 
 ECOSTARS exposes two independent sustainability datasets. Each covers a time-series of period-level KPIs per hotel, enriched with hotel identity metadata (chain, country, category, coordinates).
 
-| Domain | Endpoint | KPIs |
-| --- | --- | --- |
-| **Environmental** | `GET /esds/environmental` | Energy (kWh), water (m³), waste (kg), CO₂ Scope 1–3 (tCO₂eq), per-room-night ratios and peer benchmarks |
-| **Social** | `GET /esds/social` | Gender composition, management gender share, absenteeism, voluntary / involuntary / retirement turnover, gender pay gap, wage inequality ratio, mean hourly wage |
+| Domain            | Endpoint                  | KPIs                                                                                                                                                             |
+| ----------------- | ------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Environmental** | `GET /esds/environmental` | Energy (kWh), water (m³), waste (kg), CO₂ Scope 1–3 (tCO₂eq), per-room-night ratios and peer benchmarks                                                          |
+| **Social**        | `GET /esds/social`        | Gender composition, management gender share, absenteeism, voluntary / involuntary / retirement turnover, gender pay gap, wage inequality ratio, mean hourly wage |
 
 Access to both endpoints requires a **Bearer API key** (`Authorization: Bearer <key>`). The OpenAPI 3.1 contract lives at [`services/provider-final-system/oapi.yaml`](services/provider-final-system/oapi.yaml).
 
 Real-time updates are delivered via a webhook subscription contract:
 
-| Use case | Subscribe | Unsubscribe | Event type |
-| --- | --- | --- | --- |
+| Use case      | Subscribe                               | Unsubscribe                                    | Event type                   |
+| ------------- | --------------------------------------- | ---------------------------------------------- | ---------------------------- |
 | Environmental | `POST /esds/environmental/subscription` | `DELETE /esds/environmental/subscription/{id}` | `esds_environmental_updated` |
-| Social | `POST /esds/social/subscription` | `DELETE /esds/social/subscription/{id}` | `esds_social_updated` |
+| Social        | `POST /esds/social/subscription`        | `DELETE /esds/social/subscription/{id}`        | `esds_social_updated`        |
 
 ---
 
@@ -79,7 +79,7 @@ Two layers of components work together: the dataspace infrastructure provided by
 - The following local ports must be free:
 
 | Port   | Service                |
-|--------|------------------------|
+| ------ | ---------------------- |
 | `1500` | Heimdall               |
 | `1100` | Consumer DS-Agent      |
 | `1200` | Provider DS-Agent      |
@@ -93,7 +93,7 @@ Two layers of components work together: the dataspace infrastructure provided by
 
 Two independent stacks must be running simultaneously. Start them in order.
 
-### 1 — Dataspace infrastructure (Mini deployment)
+### 1 - Dataspace infrastructure (Mini deployment)
 
 Brings up Heimdall (authority) and both dataspace agents. Split into three Compose files inside [`deployment/mini/`](deployment/mini/):
 
@@ -103,7 +103,7 @@ docker compose -f deployment/mini/docker-compose.mini.provider.yaml up -d
 docker compose -f deployment/mini/docker-compose.mini.consumer.yaml up -d
 ```
 
-### 2 — Consumer stack
+### 2 - Consumer stack
 
 The consumer ingestion service and its dependencies. Use the `nonifi` variant unless you have a dedicated server for NiFi (it has high RAM requirements):
 
@@ -111,7 +111,7 @@ The consumer ingestion service and its dependencies. Use the `nonifi` variant un
 docker compose -f services/consumer-client-stack/docker-compose.nonifi.yaml up -d
 ```
 
-### 3 — Populate the catalog
+### 3 - Populate the catalog
 
 Once both stacks are up, run the catalog population script from the repo root. It creates the two datasets, their distributions, policies, and connector templates/instances on the provider agent:
 
@@ -121,11 +121,11 @@ bash scripts/populate_catalog.sh
 
 The script targets the provider agent at `http://127.0.0.1:1200` by default. Override any variable if your setup differs:
 
-| Variable              | Default                             | Description                     |
-|-----------------------|-------------------------------------|---------------------------------|
-| `DATA_SPACE_PROVIDER` | `http://127.0.0.1:1200`             | Provider agent URL              |
-| `ESDS_API`            | `https://staging-api.ecostars.ai`   | ECOSTARS ESDS API base URL      |
-| `API_KEY`             | _(from `.env`)_                     | Bearer API key for the ESDS API |
+| Variable              | Default                           | Description                     |
+| --------------------- | --------------------------------- | ------------------------------- |
+| `DATA_SPACE_PROVIDER` | `http://127.0.0.1:1200`           | Provider agent URL              |
+| `ESDS_API`            | `https://staging-api.ecostars.ai` | ECOSTARS ESDS API base URL      |
+| `API_KEY`             | _(from `.env`)_                   | Bearer API key for the ESDS API |
 
 ```bash
 DATA_SPACE_PROVIDER=http://127.0.0.1:1200 \
@@ -135,11 +135,11 @@ bash scripts/populate_catalog.sh
 
 The script creates the full catalog in one shot:
 
-1. **Datasets** — `environmental` and `social` (one per domain).
-2. **Distributions** — HTTP Pull and HTTP Push for each dataset (four total).
-3. **Policies** — policy-template instantiation, commercial-use licence, and research-trial access.
-4. **Connector templates** — one pull template and one push template, both using **Bearer token** authentication only.
-5. **Connector instances** — four instances (pull + push × environmental + social), each wired to the corresponding distribution and ECOSTARS endpoint.
+1. **Datasets** - `environmental` and `social` (one per domain).
+2. **Distributions** - HTTP Pull and HTTP Push for each dataset (four total).
+3. **Policies** - policy-template instantiation, commercial-use licence, and research-trial access.
+4. **Connector templates** - one pull template and one push template, both using **Bearer token** authentication only.
+5. **Connector instances** - four instances (pull + push × environmental + social), each wired to the corresponding distribution and ECOSTARS endpoint.
 
 #### Provider configuration
 
@@ -167,11 +167,11 @@ The catalog is organised around two independent use cases that share the same co
 ```text
 Catalog
 ├── Dataset: ECOSTARS Environmental Sustainability
-│   ├── Distribution: Environmental — HTTP Pull  (GET /esds/environmental)
-│   └── Distribution: Environmental — HTTP Push  (esds_environmental_updated)
+│   ├── Distribution: Environmental - HTTP Pull  (GET /esds/environmental)
+│   └── Distribution: Environmental - HTTP Push  (esds_environmental_updated)
 ├── Dataset: ECOSTARS Social Sustainability
-│   ├── Distribution: Social — HTTP Pull          (GET /esds/social)
-│   └── Distribution: Social — HTTP Push          (esds_social_updated)
+│   ├── Distribution: Social - HTTP Pull          (GET /esds/social)
+│   └── Distribution: Social - HTTP Push          (esds_social_updated)
 ├── Policies (apply to any dataset)
 │   ├── Policy: template instantiation (time-limited research access for UPM)
 │   ├── Policy: commercial use with attribution (2026)
@@ -198,7 +198,7 @@ Raw JSON payloads for every catalog object live in [`scripts/catalog-payloads/`]
 Use the Eunomia DS-Agent UI to initiate a DSP-compliant contract negotiation and transfer session:
 
 | Agent    | URL                     |
-|----------|-------------------------|
+| -------- | ----------------------- |
 | Provider | `http://127.0.0.1:1200` |
 | Consumer | `http://127.0.0.1:1100` |
 
@@ -212,13 +212,13 @@ After negotiation, trigger a transfer to move data through the dataplane:
 
 The ingestion service ([`services/consumer-client-stack/`](services/consumer-client-stack/)) exposes two endpoints:
 
-**`POST /consumer-ingestion/pull`** — on-demand bulk fetch. Calls the given URL and upserts the returned hotels and KPI records into the database:
+**`POST /consumer-ingestion/pull`** - on-demand bulk fetch. Calls the given URL and upserts the returned hotels and KPI records into the database:
 
 ```json
 { "url": "https://staging-api.ecostars.ai/esds/environmental" }
 ```
 
-**`POST /consumer-ingestion/push`** — webhook for real-time KPI updates, called by the ECOSTARS ESDS API whenever data changes. The payload is an event envelope carrying the updated hotel record:
+**`POST /consumer-ingestion/push`** - webhook for real-time KPI updates, called by the ECOSTARS ESDS API whenever data changes. The payload is an event envelope carrying the updated hotel record:
 
 ```json
 {
@@ -227,7 +227,14 @@ The ingestion service ([`services/consumer-client-stack/`](services/consumer-cli
   "data": {
     "hotel_uuid": "1756fe72-97ad-4a62-8c79-835a77725b7f",
     "hotel_name": "Molino de Saydo",
-    "values": [{ "uuid": "...", "periodicity": "year", "period": "[2023-01-01,2024-01-01)", "energyTotalKwh": 314159.0 }]
+    "values": [
+      {
+        "uuid": "...",
+        "periodicity": "year",
+        "period": "[2023-01-01,2024-01-01)",
+        "energyTotalKwh": 314159.0
+      }
+    ]
   }
 }
 ```
@@ -243,7 +250,7 @@ The Metabase dashboard queries the transactional database directly and provides 
 ![Metabase dashboard](static/docs/metabase2.png)
 
 | Service           | URL                          |
-|-------------------|------------------------------|
+| ----------------- | ---------------------------- |
 | Ingestion Service | `http://localhost:8000`      |
 | Swagger UI        | `http://localhost:8000/docs` |
 | Metabase          | `http://localhost:3000`      |
@@ -273,7 +280,7 @@ This project depends on the **public [walt.id](https://walt.id) wallet API** for
 
 By default, Eunomia operates in a generic dataspace mode. To make the deployment **GAIA-X compliant**, apply the following three changes to **both** the Provider Agent and the Consumer Agent.
 
-### 1 — Verification configuration
+### 1 - Verification configuration
 
 In each Agent config YAML, update the `verify_req_config` block to require a GAIA-X Label Credential:
 
@@ -283,19 +290,19 @@ verify_req_config:
   vcs_requested: [gx:LabelCredential]
 ```
 
-### 2 — GAIA-X connectivity
+### 2 - GAIA-X connectivity
 
 Add (or update) the `gaia_config` block pointing to the Heimdall instance:
 
 ```yaml
 gaia_config:
   api:
-    protocol: "http"   # mini: http | prod: https
-    url: "url"         # mini: host.docker.internal | prod: your.domain.com
-    port: null         # mini: 1500 (Heimdall port) | prod: null
+    protocol: "http" # mini: http | prod: https
+    url: "url" # mini: host.docker.internal | prod: your.domain.com
+    port: null # mini: 1500 (Heimdall port) | prod: null
 ```
 
-### 3 — Heimdall startup command
+### 3 - Heimdall startup command
 
 In the Docker Compose file, change the `command` for both the `heimdall` and `heimdall-setup` services:
 
@@ -307,4 +314,4 @@ command:
 ```
 
 > [!NOTE]
-> The `eco_authority.yaml` config activates **all** Heimdall roles simultaneously: GAIA-X Clearing House, Clearing House Proxy, Legal Authority, and Dataspace Authority. In a real-world ecosystem a single entity should not assume all these roles — this multi-role configuration is strictly for **development and testing**.
+> The `eco_authority.yaml` config activates **all** Heimdall roles simultaneously: GAIA-X Clearing House, Clearing House Proxy, Legal Authority, and Dataspace Authority. In a real-world ecosystem a single entity should not assume all these roles - this multi-role configuration is strictly for **development and testing**.

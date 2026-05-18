@@ -1,6 +1,6 @@
-# Heimdall — Production Deployment Guide
+# Heimdall - Production Deployment Guide
 
-This guide walks you through deploying Heimdall in production mode. Several services depend on each other, so follow the steps **in order** — do not skip ahead. It is recommended to have multiple terminals open simultaneously.
+This guide walks you through deploying Heimdall in production mode. Several services depend on each other, so follow the steps **in order** - do not skip ahead. It is recommended to have multiple terminals open simultaneously.
 
 ---
 
@@ -12,23 +12,23 @@ This guide walks you through deploying Heimdall in production mode. Several serv
 
 ---
 
-## Step 1 — Certificates
+## Step 1 - Certificates
 
 Heimdall uses two kinds of certificates in production:
 
-- **Domain certificates** — used for HTTPS (web traffic)
-- **Ecosystem certificates** — used internally to generate Verifiable Credentials
+- **Domain certificates** - used for HTTPS (web traffic)
+- **Ecosystem certificates** - used internally to generate Verifiable Credentials
 
 ### Domain certificates
 
 These live in `/vault/heimdall/config/`. Replace every `.example` file with the real certificate and remove the `.example` extension so they end in `.pem`. All files must be in PEM format (both RSA and Elliptic Curve are supported).
 
-| File | Description |
-|---|---|
-| `vault-ca.pem` | Full certificate chain including root |
-| `vault-cert.pem` | Your own domain certificate |
-| `root-ca.pem` | Root issuer certificate (usually called `Issuer.cer` — convert it to PEM format) |
-| `vault-key.pem` | Private key associated with your certificate. May look like `-----BEGIN EC PRIVATE KEY-----` |
+| File                  | Description                                                                                                                                                          |
+| --------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `vault-ca.pem`        | Full certificate chain including root                                                                                                                                |
+| `vault-cert.pem`      | Your own domain certificate                                                                                                                                          |
+| `root-ca.pem`         | Root issuer certificate (usually called `Issuer.cer` - convert it to PEM format)                                                                                     |
+| `vault-key.pem`       | Private key associated with your certificate. May look like `-----BEGIN EC PRIVATE KEY-----`                                                                         |
 | `vault-key-pkcs8.pem` | Same private key converted to PKCS8 format (`-----BEGIN PRIVATE KEY-----`). Convert with: `openssl pkcs8 -topk8 -nocrypt -in vault-key.pem -out vault-key-pkcs8.pem` |
 
 ### Ecosystem certificates and secrets
@@ -37,16 +37,16 @@ These live in `/vault/heimdall/secrets/`. They are loaded into Vault automatical
 
 There are two types of files:
 
-**Certificate files** (`.pem.example` → `.pem`): Only RSA format is supported at this time. The example files already contain valid self-generated RSA certificates — you can leave them as-is to get started, or replace them with your own.
+**Certificate files** (`.pem.example` → `.pem`): Only RSA format is supported at this time. The example files already contain valid self-generated RSA certificates - you can leave them as-is to get started, or replace them with your own.
 
 **Credential files** (`.json.example` → `.json`): These contain connection credentials used by Heimdall internally.
 
-- `db.json` — database credentials. If you changed the values in `db.env`, make sure they match here too.
-- `wallet.json` — wallet credentials. **The example values will not work** as they reference existing external accounts. Replace them with your own wallet credentials before launching.
+- `db.json` - database credentials. If you changed the values in `db.env`, make sure they match here too.
+- `wallet.json` - wallet credentials. **The example values will not work** as they reference existing external accounts. Replace them with your own wallet credentials before launching.
 
 ---
 
-## Step 2 — Base environment files
+## Step 2 - Base environment files
 
 Fill in the environment files that do not depend on other services yet. All files live in `./static/envs/`. Rename each `.example` file by removing the `.example` extension.
 
@@ -54,7 +54,7 @@ Fill in the environment files that do not depend on other services yet. All file
 
 ### `db.env`
 
-Credentials for the main Heimdall database. Use whatever values you want, or leave them as they are — just remember them, as they must match `db.json` in `/vault/heimdall/secrets/`.
+Credentials for the main Heimdall database. Use whatever values you want, or leave them as they are - just remember them, as they must match `db.json` in `/vault/heimdall/secrets/`.
 
 ```env
 POSTGRES_PASSWORD=mini_heimdall
@@ -64,7 +64,7 @@ POSTGRES_DB=mini_heimdall
 
 ### `keycloak.db.env`
 
-Credentials for the Keycloak internal database. The default values (`heimdall_keycloak`) can be left as-is or changed — if you change them, update `keycloak.env` accordingly. Note that `PGDATA` must remain unchanged.
+Credentials for the Keycloak internal database. The default values (`heimdall_keycloak`) can be left as-is or changed - if you change them, update `keycloak.env` accordingly. Note that `PGDATA` must remain unchanged.
 
 ```env
 POSTGRES_DB=heimdall_keycloak
@@ -76,14 +76,14 @@ PGDATA=/var/lib/postgresql/data/pgdata
 ### `keycloak.env`
 
 ```env
-# Admin credentials — remember these for the Keycloak UI setup (Points B and C)
+# Admin credentials - remember these for the Keycloak UI setup (Points B and C)
 KEYCLOAK_ADMIN=heimdall_keycloak        # can be changed
 KEYCLOAK_ADMIN_PASSWORD=heimdall_keycloak  # can be changed
 
 # Your domain without https:// prefix
 KC_HOSTNAME=your.domain.com
 
-# Database connection — update the DB name if you changed it in keycloak.db.env
+# Database connection - update the DB name if you changed it in keycloak.db.env
 KC_DB_URL=jdbc:postgresql://keycloak_postgres:5432/heimdall_keycloak
 KC_DB=postgres
 KC_DB_USERNAME=heimdall_keycloak
@@ -96,22 +96,22 @@ KC_HTTPS_CERTIFICATE_KEY_FILE=/etc/x509/https/vault-key-pkcs8.pem
 
 ---
 
-## Step 3 — Application configuration
+## Step 3 - Application configuration
 
 Edit `/static/config/heimdall/prod/basic_dataspace_authority.yaml`:
 
-| Line | Change |
-|---|---|
-| 6 | Replace `your_domain` with `your.domain.com` |
-| 38 | Replace `your_domain` with `your.domain.com` |
-| 41 | Replace `your_domain` with `your.domain.com` |
-| 55 | Replace `change_me` with your desired dataspace identifier |
+| Line | Change                                                     |
+| ---- | ---------------------------------------------------------- |
+| 6    | Replace `your_domain` with `your.domain.com`               |
+| 38   | Replace `your_domain` with `your.domain.com`               |
+| 41   | Replace `your_domain` with `your.domain.com`               |
+| 55   | Replace `change_me` with your desired dataspace identifier |
 
 ---
 
-## Step 4 — Partial first launch
+## Step 4 - Partial first launch
 
-Start only Vault, Keycloak and their databases. Heimdall and the proxy are not started yet — they depend on configuration obtained in the next steps.
+Start only Vault, Keycloak and their databases. Heimdall and the proxy are not started yet - they depend on configuration obtained in the next steps.
 
 ```bash
 docker compose -f docker-compose.heimdall.yaml up heimdall-vault keycloak keycloak_postgres heimdall-db -d
@@ -121,9 +121,9 @@ Wait a few seconds for all services to be ready before proceeding.
 
 ---
 
-## Step 5 — Initialize and unseal Vault
+## Step 5 - Initialize and unseal Vault
 
-> **Important:** This step is only done once. Vault data is persisted in `/vault/heimdall/data` — as long as this volume exists, you will never need to reinitialize.
+> **Important:** This step is only done once. Vault data is persisted in `/vault/heimdall/data` - as long as this volume exists, you will never need to reinitialize.
 
 In a new terminal, run:
 
@@ -131,9 +131,9 @@ In a new terminal, run:
 docker exec heimdall-vault vault operator init -address=https://your.domain.com:8200
 ```
 
-Even if port 8200 is not open externally, this will work — the command runs inside the container and NAT handles the routing.
+Even if port 8200 is not open externally, this will work - the command runs inside the container and NAT handles the routing.
 
-> If it fails immediately, wait 30 seconds and try again — Vault may still be starting.
+> If it fails immediately, wait 30 seconds and try again - Vault may still be starting.
 
 This will output something like:
 
@@ -147,7 +147,7 @@ Unseal Key 5: 2t0kKBwj+UEi7oWIzXGko4uqR+cy9xTZs7N5/aoF6NAi
 Initial Root Token: hvs.gpnaq703noTvBOJk0WnJkMcOKz
 ```
 
-**Save these values somewhere safe — you will need them every time Vault restarts.**
+**Save these values somewhere safe - you will need them every time Vault restarts.**
 
 ### Unseal Vault
 
@@ -165,21 +165,21 @@ The Vault UI is accessible at `https://your.domain.com:8200` using the root toke
 
 ---
 
-## Step 6 — Complete `heimdall.env` — Point A
+## Step 6 - Complete `heimdall.env` - Point A
 
 Now that Vault is initialized, you have the root token. Fill in `heimdall.env`:
 
 ```env
-# Vault server address — port 8200 can be closed externally, NAT handles it internally
+# Vault server address - port 8200 can be closed externally, NAT handles it internally
 VAULT_ADDR=https://your.domain.com:8200
 
-# Vault access token obtained in Step 5 — Point A
+# Vault access token obtained in Step 5 - Point A
 VAULT_TOKEN=hvs.your_root_token_here
 
 # Skip TLS verification
 VAULT_SKIP_VERIFY=false
 
-# TLS configuration — leave as-is
+# TLS configuration - leave as-is
 VAULT_CACERT=/app/vault/config/vault-ca.pem
 VAULT_CLIENT_CERT=/app/vault/config/vault-cert.pem
 VAULT_CLIENT_KEY=/app/vault/config/vault-key.pem
@@ -187,10 +187,10 @@ VAULT_CLIENT_KEY=/app/vault/config/vault-key.pem
 # Local path to Vault config
 VAULT_PATH=/app/vault/
 
-# KV v2 mount name — can be anything, e.g. "heimdall"
+# KV v2 mount name - can be anything, e.g. "heimdall"
 VAULT_MOUNT=heimdall
 
-# Secret paths — these act as internal paths, keep them private
+# Secret paths - these act as internal paths, keep them private
 VAULT_APP_DB=database/postgres
 VAULT_APP_WALLET=wallet/main
 VAULT_APP_PRIV_KEY=crypto/keys/private
@@ -203,30 +203,30 @@ VAULT_APP_ROOT_CLIENT_KEY=crypto/keys/vault-root-cert.pem
 
 ---
 
-## Step 7 — Configure Keycloak
+## Step 7 - Configure Keycloak
 
 Access the Keycloak admin panel at `https://your.domain.com:8443` using the credentials from Points B and C (`KEYCLOAK_ADMIN` and `KEYCLOAK_ADMIN_PASSWORD` in `keycloak.env`).
 
-### Create the realm — Point F
+### Create the realm - Point F
 
 - Click the dropdown in the top left (shows `master`) → **Create realm**
-- Name: `heimdall` — can be changed. If changed, update `OAUTH2_PROXY_OIDC_ISSUER_URL` and `OAUTH2_PROXY_BACKEND_LOGOUT_URL` in `proxy.env` accordingly
+- Name: `heimdall` - can be changed. If changed, update `OAUTH2_PROXY_OIDC_ISSUER_URL` and `OAUTH2_PROXY_BACKEND_LOGOUT_URL` in `proxy.env` accordingly
 - Click **Create**
 
-### Create the client — Point D
+### Create the client - Point D
 
 - Go to **Clients** → **Create client**
-- Client ID: `heimdall-client` — can be changed. If changed, update `OAUTH2_PROXY_CLIENT_ID` in `proxy.env`
+- Client ID: `heimdall-client` - can be changed. If changed, update `OAUTH2_PROXY_CLIENT_ID` in `proxy.env`
 - Client type: `OpenID Connect` → **Next**
 - Enable `Client authentication` → **Next**
 - Valid redirect URIs: `https://your.domain.com/oauth2/callback`
 - Web origins: `https://your.domain.com`
 - Click **Save**
 
-### Copy the client secret — Point E
+### Copy the client secret - Point E
 
 - Go to the **Credentials** tab of the client
-- Copy the `Client secret` — you will need it in the next step
+- Copy the `Client secret` - you will need it in the next step
 
 ### Add the audience mapper
 
@@ -259,7 +259,7 @@ Access the Keycloak admin panel at `https://your.domain.com:8443` using the cred
 
 ---
 
-## Step 8 — Complete `proxy.env` — Point E
+## Step 8 - Complete `proxy.env` - Point E
 
 Now that you have the Keycloak client secret, fill in `proxy.env`:
 
@@ -307,7 +307,7 @@ openssl rand -base64 24
 
 ---
 
-## Step 9 — Full launch
+## Step 9 - Full launch
 
 With all environment files complete, start all services:
 
@@ -315,7 +315,7 @@ With all environment files complete, start all services:
 docker compose -f docker-compose.prod.yaml up -d
 ```
 
-All services should now be running. Visit `https://your.domain.com/admin/home` — you should be redirected to the Keycloak login page.
+All services should now be running. Visit `https://your.domain.com/admin/home` - you should be redirected to the Keycloak login page.
 
 ---
 

@@ -46,14 +46,14 @@ HTTP_CODE=$(
 )
 
 if [[ "${HTTP_CODE}" =~ ^2 ]]; then
-  log "==> HTTP ${HTTP_CODE} — OK"
+  log "==> HTTP ${HTTP_CODE} - OK"
   if command -v jq >/dev/null 2>&1; then
     jq . /tmp/ecostars_response.json
   else
     cat /tmp/ecostars_response.json; echo
   fi
 else
-  err "==> HTTP ${HTTP_CODE} — request failed"
+  err "==> HTTP ${HTTP_CODE} - request failed"
   cat /tmp/ecostars_response.json; echo
   exit 1
 fi

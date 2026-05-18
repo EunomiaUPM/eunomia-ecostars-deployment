@@ -1,6 +1,6 @@
-# **Ecostars — Provider (Mock Server)**
+# **Ecostars - Provider (Mock Server)**
 
-The **Provider** of the Ecostars pilot. A Go 1.24 service that mocks the productive systems of an Ecostars-like organisation: it exposes hotel sustainability data and emits real-time metric updates. In the dataspace, this service sits behind the **Provider Agent** (Eunomia) and is consumed — under DSP negotiation — by the [Consumer](../consumer/README.md).
+The **Provider** of the Ecostars pilot. A Go 1.24 service that mocks the productive systems of an Ecostars-like organisation: it exposes hotel sustainability data and emits real-time metric updates. In the dataspace, this service sits behind the **Provider Agent** (Eunomia) and is consumed - under DSP negotiation - by the [Consumer](../consumer/README.md).
 
 The service has two surfaces:
 
@@ -134,7 +134,7 @@ Both `static-api` and `dynamic-api` are protected and require a valid Bearer Tok
 
 - **URL**: [http://localhost:8080](http://localhost:8080)
 - **Admin Console**: [http://localhost:8080/admin](http://localhost:8080/admin)
-- **Admin credentials**: `admin` / `admin` _(mini deployment only — replace in prod)_
+- **Admin credentials**: `admin` / `admin` _(mini deployment only - replace in prod)_
 
 ### Default realm
 
