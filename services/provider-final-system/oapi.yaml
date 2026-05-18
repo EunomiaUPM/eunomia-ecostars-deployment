@@ -27,12 +27,12 @@ info:
     Conventions:
 
     - `period` is a half-open date range in PostgreSQL range literal syntax:
-      `[YYYY-MM-DD,YYYY-MM-DD)` — lower bound inclusive, upper bound exclusive.
+      `[YYYY-MM-DD,YYYY-MM-DD)` - lower bound inclusive, upper bound exclusive.
     - Per-room-night ratios are denoted `*RN` (RN = room nights).
     - Benchmark values (`benchmarkRating*RN`) reflect comparable peer hotels;
       they are not currently emitted for social KPIs.
     - **Nullability**: most KPI fields, as well as `chain_uuid`, `chain_name`
-      and `region`, are nullable — the server emits `null` when a value is
+      and `region`, are nullable - the server emits `null` when a value is
       not (yet) reported. Identifying fields (`hotel_uuid`, value `uuid`,
       `period`, `periodicity`, `country_slug`, `category_slug`, `zip`,
       `hotel_name`, `lat`, `lon`) are always present and non-null.

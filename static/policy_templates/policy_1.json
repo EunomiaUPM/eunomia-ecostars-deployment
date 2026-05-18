@@ -9,7 +9,7 @@
         "action": "use",
         "constraint": [
           {
-            "leftOperand": "bla",
+            "leftOperand": "userId",
             "operator": "eq",
             "rightOperand": "$bla"
           }

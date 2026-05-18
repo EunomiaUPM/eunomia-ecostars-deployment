@@ -1,4 +1,4 @@
-# **Ecostars — Consumer (Ingestion Service)**
+# **Ecostars - Consumer (Ingestion Service)**
 
 The **Consumer** of the Ecostars pilot. A FastAPI microservice that acts as the data ingestion layer for the dataspace participant on the demand side. It handles both real-time metric updates (push) and on-demand bulk data retrieval (pull) from the [Provider](../provider/README.md), persisting everything into a PostgreSQL database consumed by Metabase.
 
@@ -18,11 +18,11 @@ Provider Agent (Eunomia)
                                                                                   Metabase
 ```
 
-### `/pull` — On-demand bulk ingestion
+### `/pull` - On-demand bulk ingestion
 
 Triggered manually or by a scheduler. Accepts a URL, calls it, and upserts the returned hotel and measure data into the database. Hotels are matched by `(name, city)`; measures are matched by `(hotel_id, year)`.
 
-### `/push` — Real-time metric ingestion
+### `/push` - Real-time metric ingestion
 
 Webhook endpoint that receives individual metric updates and appends them as immutable historical records to the `metric_items` table.
 
@@ -99,17 +99,17 @@ This starts (mini deployment subset relevant to the Consumer):
 
 ## **Environment variables**
 
-All configuration is injected via environment variables. No `.env` file is needed when running in Docker — the deployment Compose file populates them.
+All configuration is injected via environment variables. No `.env` file is needed when running in Docker - the deployment Compose file populates them.
 
 | Variable            | Description                                | Default |
 | ------------------- | ------------------------------------------ | ------- |
-| `ENV`               | Set to `production` to skip `.env` loading | —       |
+| `ENV`               | Set to `production` to skip `.env` loading | -       |
 | `APP_PORT`          | Port the service listens on                | `8000`  |
-| `DATABASE_USER`     | PostgreSQL user                            | —       |
-| `DATABASE_PASSWORD` | PostgreSQL password                        | —       |
-| `DATABASE_HOST`     | PostgreSQL host                            | —       |
-| `DATABASE_PORT`     | PostgreSQL port                            | —       |
-| `DATABASE_NAME`     | PostgreSQL database name                   | —       |
+| `DATABASE_USER`     | PostgreSQL user                            | -       |
+| `DATABASE_PASSWORD` | PostgreSQL password                        | -       |
+| `DATABASE_HOST`     | PostgreSQL host                            | -       |
+| `DATABASE_PORT`     | PostgreSQL port                            | -       |
+| `DATABASE_NAME`     | PostgreSQL database name                   | -       |
 
 ## **API reference**
 
@@ -188,10 +188,10 @@ metric_items          (append-only metric history, keyed by hotel_id)
 
 The Consumer's responsibilities under the Eunomia flow:
 
-1. **Discovery** — performed by the Consumer Agent, which queries the Provider Agent's DCAT catalog.
-2. **Negotiation** — the Consumer Agent agrees an ODRL contract with the Provider Agent.
-3. **Pull transfers** — when bulk data is needed, the Consumer Agent invokes `/pull` here with the negotiated, time-bounded URL pointing at the Provider's static API (proxied via the Provider Agent).
-4. **Push transfers** — when streaming updates are negotiated, the Provider's dynamic API pushes notifications to the Consumer Agent, which forwards them to `/push` here.
+1. **Discovery** - performed by the Consumer Agent, which queries the Provider Agent's DCAT catalog.
+2. **Negotiation** - the Consumer Agent agrees an ODRL contract with the Provider Agent.
+3. **Pull transfers** - when bulk data is needed, the Consumer Agent invokes `/pull` here with the negotiated, time-bounded URL pointing at the Provider's static API (proxied via the Provider Agent).
+4. **Push transfers** - when streaming updates are negotiated, the Provider's dynamic API pushes notifications to the Consumer Agent, which forwards them to `/push` here.
 
 This service does **not** speak DSP itself; it stays a normal HTTP API. All policy enforcement, identity exchange and contract bookkeeping happen one layer above, in the Consumer Agent.
 
@@ -199,4 +199,4 @@ This service does **not** speak DSP itself; it stays a normal HTTP API. All poli
 
 See `docker-compose.yml` under [`deployment/mini`](../../deployment/mini/README.md) or [`deployment/prod`](../../deployment/prod/README.md). The `consumer-ingestion` service depends on `transactional-db` with a health check, so the app will only start once PostgreSQL is ready.
 
-To recreate the database schema from scratch, set `drop_first=True` in `create_db_and_tables()` on first startup — **development only**.
+To recreate the database schema from scratch, set `drop_first=True` in `create_db_and_tables()` on first startup - **development only**.
