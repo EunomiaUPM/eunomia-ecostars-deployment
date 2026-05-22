@@ -25,7 +25,8 @@ services:
   # =========================
   consumer-setup:
     container_name: ecostars-consumer-setup
-    image: quay.io/eunomia_upm/ds-agent
+    image: quay.io/eunomia_upm/ds-agent:dev
+    platform: linux/amd64
     command: ["setup", "-e", "/app/static/config/mini.consumer.yaml"]
     volumes:
       - ./../../static/config/consumer/mini:/app/static/config
@@ -44,7 +45,8 @@ services:
   # =========================
   consumer:
     container_name: ecostars-consumer
-    image: quay.io/eunomia_upm/ds-agent
+    image: quay.io/eunomia_upm/ds-agent:dev
+    platform: linux/amd64
     command: ["start", "-e", "/app/static/config/mini.consumer.yaml"]
     ports:
       - "1100:1100"

@@ -13,6 +13,7 @@ services:
   heimdall-setup:
     container_name: ecostars-authority-heimdall-setup
     image: quay.io/eunomia_upm/heimdall
+    platform: linux/amd64
     volumes:
       - ./../../static/config/heimdall/mini:/app/static/config
       - ./../../static/specs/heimdall:/app/static/specs
@@ -30,6 +31,7 @@ services:
   heimdall:
     container_name: ecostars-authority-heimdall
     image: quay.io/eunomia_upm/heimdall
+    platform: linux/amd64
     ports:
       - "1500:1500"
     volumes:
