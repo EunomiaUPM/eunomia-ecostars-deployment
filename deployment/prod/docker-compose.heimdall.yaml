@@ -40,7 +40,7 @@ services:
 
   heimdall-setup:
     container_name: heimdall-setup
-    image: rmenendez8/heimdall:v2.0.0
+    image: quay.io/eunomia_upm/heimdall
     volumes:
       - ./../../static/config/heimdall/prod:/app/static/config
       - ./../../static/specs/heimdall:/app/static/specs
@@ -60,7 +60,7 @@ services:
 
   heimdall:
     container_name: heimdall
-    image: rmenendez8/heimdall:v2.0.0
+    image: quay.io/eunomia_upm/heimdall
     volumes:
       - ./../../static/config/heimdall/prod:/app/static/config
       - ./../../static/specs/heimdall:/app/static/specs

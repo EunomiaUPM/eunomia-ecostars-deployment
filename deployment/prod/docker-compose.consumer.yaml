@@ -54,7 +54,7 @@ services:
   # =========================
   consumer-setup:
     container_name: consumer-setup
-    image: rmenendez8/rainbow:v1.3.0
+    image: quay.io/eunomia_upm/ds-agent
     command: ["setup", "-e", "/app/static/config/core.consumer.yaml"]
     volumes:
       - ./../../static/config/consumer/prod:/app/static/config
@@ -74,7 +74,7 @@ services:
   # =========================
   consumer:
     container_name: consumer
-    image: rmenendez8/rainbow:v1.3.0
+    image: quay.io/eunomia_upm/ds-agent
     command: ["start", "-e", "/app/static/config/core.consumer.yaml"]
     ports:
       - "443:443"

@@ -12,7 +12,7 @@ services:
 
   heimdall-setup:
     container_name: ecostars-authority-heimdall-setup
-    image: rmenendez8/heimdall:v2.0.2
+    image: quay.io/eunomia_upm/heimdall
     volumes:
       - ./../../static/config/heimdall/mini:/app/static/config
       - ./../../static/specs/heimdall:/app/static/specs
@@ -29,7 +29,7 @@ services:
 
   heimdall:
     container_name: ecostars-authority-heimdall
-    image: rmenendez8/heimdall:v2.0.2
+    image: quay.io/eunomia_upm/heimdall
     ports:
       - "1500:1500"
     volumes:
