@@ -1,0 +1,177 @@
+name: Deploy
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Environment to deploy"
+        required: true
+        default: prod
+        type: choice
+        options:
+          - prod
+          - mini
+
+jobs:
+  # ──────────────────────────────────────────────
+  # Resolve compose file paths for the environment
+  # ──────────────────────────────────────────────
+  resolve-env:
+    runs-on: ubuntu-latest
+    outputs:
+      heimdall_compose: ${{ steps.paths.outputs.heimdall_compose }}
+      provider_compose: ${{ steps.paths.outputs.provider_compose }}
+      consumer_compose: ${{ steps.paths.outputs.consumer_compose }}
+      deploy_client_stack: ${{ steps.paths.outputs.deploy_client_stack }}
+      environment: ${{ steps.paths.outputs.environment }}
+    steps:
+      - name: Resolve compose paths
+        id: paths
+        run: |
+          ENV="${{ github.event.inputs.environment || 'prod' }}"
+          echo "environment=$ENV" >> "$GITHUB_OUTPUT"
+
+          if [ "$ENV" = "prod" ]; then
+            echo "heimdall_compose=deployment/prod/docker-compose.heimdall.yaml" >> "$GITHUB_OUTPUT"
+            echo "provider_compose=deployment/prod/docker-compose.provider.yaml" >> "$GITHUB_OUTPUT"
+            echo "consumer_compose=deployment/prod/docker-compose.consumer.yaml" >> "$GITHUB_OUTPUT"
+            echo "deploy_client_stack=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "heimdall_compose=deployment/mini/docker-compose.mini.heimdall.yaml" >> "$GITHUB_OUTPUT"
+            echo "provider_compose=deployment/mini/docker-compose.mini.provider.yaml" >> "$GITHUB_OUTPUT"
+            echo "consumer_compose=deployment/mini/docker-compose.mini.consumer.yaml" >> "$GITHUB_OUTPUT"
+            echo "deploy_client_stack=false" >> "$GITHUB_OUTPUT"
+          fi
+
+  # ──────────────────────────────────────────────
+  # Machine A — Heimdall (Authority)
+  # Must complete before Provider and Consumer
+  # ──────────────────────────────────────────────
+  deploy-heimdall:
+    runs-on: ubuntu-latest
+    needs: resolve-env
+    environment: ${{ needs.resolve-env.outputs.environment }}
+    steps:
+      - name: Deploy Heimdall via SSH
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.HEIMDALL_HOST }}
+          username: ${{ secrets.HEIMDALL_USER }}
+          key: ${{ secrets.HEIMDALL_SSH_KEY }}
+          port: ${{ secrets.HEIMDALL_SSH_PORT || 22 }}
+          script: |
+            set -e
+            cd "${{ secrets.DEPLOY_PATH }}"
+
+            echo "==> Updating repository"
+            git fetch origin main
+            git reset --hard origin/main
+
+            echo "==> Authenticating with quay.io"
+            echo "${{ secrets.QUAY_PASSWORD }}" | \
+              docker login quay.io -u "${{ secrets.QUAY_USER }}" --password-stdin
+
+            echo "==> Pulling latest images"
+            docker compose -f ${{ needs.resolve-env.outputs.heimdall_compose }} pull
+
+            echo "==> Starting Heimdall"
+            docker compose -f ${{ needs.resolve-env.outputs.heimdall_compose }} up -d --remove-orphans
+
+            echo "==> Stack status"
+            docker compose -f ${{ needs.resolve-env.outputs.heimdall_compose }} ps
+
+  # ──────────────────────────────────────────────
+  # Machine B — Provider
+  # ──────────────────────────────────────────────
+  deploy-provider:
+    runs-on: ubuntu-latest
+    needs: [resolve-env, deploy-heimdall]
+    environment: ${{ needs.resolve-env.outputs.environment }}
+    steps:
+      - name: Deploy Provider via SSH
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.PROVIDER_HOST }}
+          username: ${{ secrets.PROVIDER_USER }}
+          key: ${{ secrets.PROVIDER_SSH_KEY }}
+          port: ${{ secrets.PROVIDER_SSH_PORT || 22 }}
+          script: |
+            set -e
+            cd "${{ secrets.DEPLOY_PATH }}"
+
+            echo "==> Updating repository"
+            git fetch origin main
+            git reset --hard origin/main
+
+            echo "==> Authenticating with quay.io"
+            echo "${{ secrets.QUAY_PASSWORD }}" | \
+              docker login quay.io -u "${{ secrets.QUAY_USER }}" --password-stdin
+
+            echo "==> Pulling latest image"
+            docker compose -f ${{ needs.resolve-env.outputs.provider_compose }} pull
+
+            echo "==> Starting Provider"
+            docker compose -f ${{ needs.resolve-env.outputs.provider_compose }} up -d --remove-orphans
+
+            echo "==> Stack status"
+            docker compose -f ${{ needs.resolve-env.outputs.provider_compose }} ps
+
+  # ──────────────────────────────────────────────
+  # Machine C — Consumer DS-Agent + Client Stack
+  # ──────────────────────────────────────────────
+  deploy-consumer:
+    runs-on: ubuntu-latest
+    needs: [resolve-env, deploy-heimdall]
+    environment: ${{ needs.resolve-env.outputs.environment }}
+    steps:
+      - name: Deploy Consumer DS-Agent via SSH
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.CONSUMER_HOST }}
+          username: ${{ secrets.CONSUMER_USER }}
+          key: ${{ secrets.CONSUMER_SSH_KEY }}
+          port: ${{ secrets.CONSUMER_SSH_PORT || 22 }}
+          script: |
+            set -e
+            cd "${{ secrets.DEPLOY_PATH }}"
+
+            echo "==> Updating repository"
+            git fetch origin main
+            git reset --hard origin/main
+
+            echo "==> Authenticating with quay.io"
+            echo "${{ secrets.QUAY_PASSWORD }}" | \
+              docker login quay.io -u "${{ secrets.QUAY_USER }}" --password-stdin
+
+            echo "==> Pulling latest image"
+            docker compose -f ${{ needs.resolve-env.outputs.consumer_compose }} pull
+
+            echo "==> Starting Consumer DS-Agent"
+            docker compose -f ${{ needs.resolve-env.outputs.consumer_compose }} up -d --remove-orphans
+
+            echo "==> Stack status"
+            docker compose -f ${{ needs.resolve-env.outputs.consumer_compose }} ps
+
+      - name: Deploy Consumer Client Stack via SSH (prod only)
+        if: needs.resolve-env.outputs.deploy_client_stack == 'true'
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.CONSUMER_HOST }}
+          username: ${{ secrets.CONSUMER_USER }}
+          key: ${{ secrets.CONSUMER_SSH_KEY }}
+          port: ${{ secrets.CONSUMER_SSH_PORT || 22 }}
+          script: |
+            set -e
+            cd "${{ secrets.DEPLOY_PATH }}/services/consumer-client-stack"
+
+            echo "==> Pulling latest images (NiFi, Metabase, Postgres)"
+            docker compose pull
+
+            echo "==> Starting Consumer Client Stack"
+            docker compose up -d --remove-orphans
+
+            echo "==> Stack status"
+            docker compose ps
