@@ -12,3 +12,4 @@ public_key.json.example
 private_key.json.example
 
 *.ps1
+scripts/.env
