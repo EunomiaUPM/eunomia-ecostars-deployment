@@ -17,7 +17,6 @@ hosts_config:
   graphql: null
 
 connection_config:
-  is_local: true
   is_prod: false
   is_vault_real: false
   has_tls_proxy: false
@@ -28,28 +27,27 @@ db_config:
   port: '5432'
 
 wallet_config:
+  wallet: Fafnir
   api:
-    protocol: 'http'
-    url: 'host.docker.internal'
-    port: '7001'
-  id: null
+    http:
+      protocol: 'http'
+      url: 'ecostars-authority-fafnir-wallet'
+      port: '7001'
+      internal_port: null
+    grpc: null
+    graphql: null
 
 did_config:
-  did: 'did:jwk:...'
   type: Jwk
-  did_web_options: null
-  #    domain: "CHANGE_ME"
-  #    path: null
+  # domain: 'host.docker.internal'
+  # path:
+  # port: '1500'
 
-role: DataSpaceAuthority
+role: EcoAuthority
 
 api_config:
   version: 'v1'
   openapi_path: '/app/static/specs/openapi/openapi.json'
-
-vc_config:
-  vc_model: JwtVc
-  w3c_data_model: V2
 
 issue_config:
   ds_config:
