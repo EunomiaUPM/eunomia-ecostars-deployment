@@ -48,17 +48,73 @@ services:
     extra_hosts:
       - "host.docker.internal:host-gateway"
 
+  # Metabase keeps its own state (users, data sources, dashboards) in an
+  # "application database". Left unset it falls back to an in-container H2
+  # file, which is lost whenever the container is recreated - that is why the
+  # setup wizard kept coming back. This creates a dedicated database for it
+  # inside transactional-db, and is a no-op once it exists.
+  metabase-db-init:
+    image: postgres:15
+    container_name: metabase-db-init
+    environment:
+      PGPASSWORD: postgres
+    command:
+      - sh
+      - -c
+      - >-
+        psql -h transactional-db -U postgres -d postgres -tAc
+        "SELECT 1 FROM pg_database WHERE datname='metabase'" | grep -q 1
+        || createdb -h transactional-db -U postgres metabase
+    depends_on:
+      transactional-db:
+        condition: service_healthy
+    restart: "no"
+
   metabase:
     image: metabase/metabase:latest
     container_name: metabase
     deploy:
       replicas: 1
+    environment:
+      MB_DB_TYPE: postgres
+      MB_DB_HOST: transactional-db
+      MB_DB_PORT: 5432
+      MB_DB_DBNAME: metabase
+      MB_DB_USER: postgres
+      MB_DB_PASS: postgres
     ports:
       - "3000:3000"
     depends_on:
-      - transactional-db
+      metabase-db-init:
+        condition: service_completed_successfully
     extra_hosts:
       - "host.docker.internal:host-gateway"
+
+  metabase-setup:
+    image: alpine:3.21
+    container_name: metabase-setup
+    environment:
+      MB_URL: http://metabase:3000
+      MB_ADMIN_EMAIL: "${METABASE_ADMIN_EMAIL:-admin1@ecostars.ai}"
+      MB_ADMIN_PASSWORD: "${METABASE_ADMIN_PASSWORD:-Ecostars2026!}"
+      MB_ADMIN_FIRST_NAME: "${METABASE_ADMIN_FIRST_NAME:-Admin}"
+      MB_ADMIN_LAST_NAME: "${METABASE_ADMIN_LAST_NAME:-Ecostars}"
+      MB_SITE_NAME: "${METABASE_SITE_NAME:-ECOSTARS}"
+      MB_SOURCE_DB_NAME: "ECOSTARS transactional"
+      MB_SOURCE_DB_HOST: transactional-db
+      MB_SOURCE_DB_PORT: 5432
+      MB_SOURCE_DB_DATABASE: postgres
+      MB_SOURCE_DB_USER: postgres
+      MB_SOURCE_DB_PASSWORD: postgres
+    volumes:
+      - ./inner/metabase-init/setup.sh:/setup.sh:ro
+    command:
+      - sh
+      - -c
+      - apk add --no-cache curl jq >/dev/null && sh /setup.sh
+    depends_on:
+      - metabase
+    restart: "no"
 
 volumes:
   transactional-db-data:
