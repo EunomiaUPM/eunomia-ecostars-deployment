@@ -8,15 +8,15 @@ echo "         FULL ONBOARDING"
 echo "======================================"
 
 log_step "Linking wallets"
-curl_raw POST "$AUTHORITY_URL/api/v1/wallet/link" >/dev/null
-curl_raw POST "$CONSUMER_URL/api/v1/wallet/link" >/dev/null
-curl_raw POST "$PROVIDER_URL/api/v1/wallet/link" >/dev/null
+curl_checked POST "$AUTHORITY_URL/api/v1/wallet/link" >/dev/null
+curl_checked POST "$CONSUMER_URL/api/v1/wallet/link" >/dev/null
+curl_checked POST "$PROVIDER_URL/api/v1/wallet/link" >/dev/null
 log_success "Wallets linked"
 
-PARTICIPANT_URL="$CONSUMER_URL" PARTICIPANT_SLUG="consumer" \
+PARTICIPANT_URL="$CONSUMER_URL" PARTICIPANT_NICK="consumer" \
     bash "$SCRIPT_DIR/register-with-authority.sh"
 
-PARTICIPANT_URL="$PROVIDER_URL" PARTICIPANT_SLUG="provider" \
+PARTICIPANT_URL="$PROVIDER_URL" PARTICIPANT_NICK="provider" \
     bash "$SCRIPT_DIR/register-with-authority.sh"
 
 bash "$SCRIPT_DIR/authenticate-participants.sh"

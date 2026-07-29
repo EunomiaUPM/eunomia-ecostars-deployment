@@ -21,3 +21,27 @@ curl_raw() {
         curl -s -X "$method" "$url" -H "Content-Type: application/json"
     fi
 }
+
+# Like curl_raw, but aborts on any non-2xx response. Prefer it for anything
+# that mutates state: curl_raw swallows errors, so failed steps go unnoticed
+# and the script still reports success.
+curl_checked() {
+    local method=${1:-GET}
+    local url=$2
+    local body=${3:-}
+    local out code
+    out=$(mktemp)
+    if [ -n "$body" ]; then
+        code=$(curl -s -o "$out" -w '%{http_code}' -X "$method" "$url" \
+            -H "Content-Type: application/json" -d "$body")
+    else
+        code=$(curl -s -o "$out" -w '%{http_code}' -X "$method" "$url" \
+            -H "Content-Type: application/json")
+    fi
+    if [[ ! "$code" =~ ^2 ]]; then
+        log_error "$method $url -> HTTP $code
+$(head -c 400 "$out")"
+    fi
+    cat "$out"
+    rm -f "$out"
+}
