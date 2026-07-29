@@ -9,18 +9,70 @@ services:
       - ./../../static/envs/heimdall/db.env.example
     ports:
       - "1450:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U mini_heimdall"]
+      interval: 10s
+      retries: 10
+
+  # =========================
+  # Fafnir wallet
+  # =========================
+  heimdall-fafnir-setup:
+    container_name: ecostars-authority-fafnir-setup
+    image: rmenendez8/fafnir:v0.2.0
+    platform: linux/amd64
+    restart: "no"
+    depends_on:
+      heimdall-db:
+        condition: service_healthy
+    volumes:
+      - ./../../static/config/heimdall/mini/fafnir.heimdall.yaml:/app/static/fafnir/config.yaml
+      - ./../../vault/heimdall/secrets/db.json.example:/app/vault/secrets/db.json.example
+    env_file:
+      - ./../../static/envs/heimdall/fafnir.env.example
+    environment:
+      RUST_BACKTRACE: 1
+    command: ["setup", "--env-file", "/app/static/fafnir/config.yaml"]
+
+  heimdall-fafnir-wallet:
+    container_name: ecostars-authority-fafnir-wallet
+    image: rmenendez8/fafnir:v0.2.0
+    platform: linux/amd64
+    restart: always
+    depends_on:
+      heimdall-fafnir-setup:
+        condition: service_completed_successfully
+    volumes:
+      - ./../../static/config/heimdall/mini/fafnir.heimdall.yaml:/app/static/fafnir/config.yaml
+      - ./../../vault/heimdall/secrets/db.json.example:/app/vault/secrets/db.json.example
+    env_file:
+      - ./../../static/envs/heimdall/fafnir.env.example
+    environment:
+      RUST_BACKTRACE: 1
+    command: ["start", "--env-file", "/app/static/fafnir/config.yaml"]
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:7001/readiness"]
+      interval: 10s
+      timeout: 2s
+      retries: 10
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
 
   heimdall-setup:
     container_name: ecostars-authority-heimdall-setup
-    image: rmenendez8/heimdall:v2.0.2
+    image: rmenendez8/heimdall:v2.1.0
+    platform: linux/amd64
     volumes:
       - ./../../static/config/heimdall/mini:/app/static/config
       - ./../../static/specs/heimdall:/app/static/specs
       - ./../../vault/heimdall:/app/vault
     depends_on:
-      - heimdall-db
+      heimdall-db:
+        condition: service_healthy
     env_file:
       - ./../../static/envs/heimdall/heimdall.env.example
+    environment:
+      RUST_BACKTRACE: 1
     command:
       - setup
       - --env-file
@@ -29,7 +81,9 @@ services:
 
   heimdall:
     container_name: ecostars-authority-heimdall
-    image: rmenendez8/heimdall:v2.0.2
+    image: rmenendez8/heimdall:v2.1.0
+    platform: linux/amd64
+    restart: always
     ports:
       - "1500:1500"
     volumes:
@@ -39,11 +93,20 @@ services:
     depends_on:
       heimdall-setup:
         condition: service_completed_successfully
+      heimdall-fafnir-wallet:
+        condition: service_healthy
     env_file:
       - ./../../static/envs/heimdall/heimdall.env.example
+    environment:
+      RUST_BACKTRACE: 1
     command:
       - start
       - --env-file
       - /app/static/config/mini_basic_dataspace_authority.yaml
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:1500/readiness"]
+      interval: 10s
+      timeout: 2s
+      retries: 10
     extra_hosts:
       - "host.docker.internal:host-gateway"

@@ -9,6 +9,10 @@ services:
       - ./../../static/envs/consumer/db.env.example
     ports:
       - "1300:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U mini_consumer"]
+      interval: 10s
+      retries: 10
 
   consumer-redis:
     image: redis:alpine
@@ -21,12 +25,57 @@ services:
       >ds_core_consumer_redis ~* +@all
 
   # =========================
+  # Fafnir wallet
+  # =========================
+  consumer-fafnir-setup:
+    container_name: ecostars-consumer-fafnir-setup
+    image: rmenendez8/fafnir:v0.2.0
+    platform: linux/amd64
+    depends_on:
+      consumer-db:
+        condition: service_healthy
+    volumes:
+      - ./../../static/config/consumer/mini/fafnir.consumer.yaml:/app/static/fafnir/config.yaml
+      - ./../../vault/consumer/secrets/db.json.example:/app/vault/secrets/db.json.example
+    env_file:
+      - ./../../static/envs/consumer/fafnir.env.example
+    environment:
+      RUST_BACKTRACE: 1
+    command: ["setup", "--env-file", "/app/static/fafnir/config.yaml"]
+    restart: "no"
+
+  consumer-fafnir-wallet:
+    container_name: ecostars-consumer-fafnir-wallet
+    image: rmenendez8/fafnir:v0.2.0
+    platform: linux/amd64
+    restart: always
+    depends_on:
+      consumer-fafnir-setup:
+        condition: service_completed_successfully
+    volumes:
+      - ./../../static/config/consumer/mini/fafnir.consumer.yaml:/app/static/fafnir/config.yaml
+      - ./../../vault/consumer/secrets/db.json.example:/app/vault/secrets/db.json.example
+    env_file:
+      - ./../../static/envs/consumer/fafnir.env.example
+    environment:
+      RUST_BACKTRACE: 1
+    command: ["start", "--env-file", "/app/static/fafnir/config.yaml"]
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:7001/readiness"]
+      interval: 10s
+      timeout: 2s
+      retries: 10
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  # =========================
   # Setup job (one-shot)
   # =========================
   consumer-setup:
     container_name: ecostars-consumer-setup
-    image: quay.io/eunomia_upm/ds-agent-core:0.3.9
-    command: [ "setup", "-e", "/app/static/config/mini.consumer.yaml" ]
+    image: quay.io/eunomia_upm/ds-agent:dev-22f38ce
+    platform: linux/amd64
+    command: ["setup", "-e", "/app/static/config/mini.consumer.yaml"]
     volumes:
       - ./../../static/config/consumer/mini:/app/static/config
       - ./../../static/specs/agent:/app/static/specs
@@ -38,14 +87,17 @@ services:
     env_file:
       - ./../../static/envs/consumer/core.env.example
     restart: "no"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
 
   # =========================
   # Main service
   # =========================
   consumer:
     container_name: ecostars-consumer
-    image: quay.io/eunomia_upm/ds-agent-core:0.3.9
-    command: [ "start", "-e", "/app/static/config/mini.consumer.yaml" ]
+    image: quay.io/eunomia_upm/ds-agent:dev-22f38ce
+    platform: linux/amd64
+    command: ["start", "-e", "/app/static/config/mini.consumer.yaml"]
     ports:
       - "1100:1100"
     volumes:
@@ -60,7 +112,11 @@ services:
         condition: service_started
       consumer-redis:
         condition: service_started
+      consumer-fafnir-wallet:
+        condition: service_healthy
     env_file:
       - ./../../static/envs/consumer/core.env.example
+    environment:
+      RUST_BACKTRACE: full
     extra_hosts:
       - "host.docker.internal:host-gateway"
