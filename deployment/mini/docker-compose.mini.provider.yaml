@@ -73,7 +73,7 @@ services:
   # =========================
   provider-setup:
     container_name: ecostars-provider-setup
-    image: quay.io/eunomia_upm/ds-agent:dev-22f38ce
+    image: quay.io/eunomia_upm/ds-agent:v0.4.0
     platform: linux/amd64
     command: ["setup", "-e", "/app/static/config/mini.provider.yaml"]
     volumes:
@@ -95,7 +95,7 @@ services:
   # =========================
   provider:
     container_name: ecostars-provider
-    image: quay.io/eunomia_upm/ds-agent:dev-22f38ce
+    image: quay.io/eunomia_upm/ds-agent:v0.4.0
     platform: linux/amd64
     command: ["start", "-e", "/app/static/config/mini.provider.yaml"]
     ports:
@@ -118,5 +118,10 @@ services:
       - ./../../static/envs/provider/core.env.example
     environment:
       RUST_BACKTRACE: full
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:1200/api/v1/readiness"]
+      interval: 5s
+      timeout: 2s
+      retries: 24
     extra_hosts:
       - "host.docker.internal:host-gateway"

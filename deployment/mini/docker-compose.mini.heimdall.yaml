@@ -60,7 +60,7 @@ services:
 
   heimdall-setup:
     container_name: ecostars-authority-heimdall-setup
-    image: rmenendez8/heimdall:v2.1.0
+    image: quay.io/eunomia_upm/heimdall:v1.5.0
     platform: linux/amd64
     volumes:
       - ./../../static/config/heimdall/mini:/app/static/config
@@ -81,7 +81,7 @@ services:
 
   heimdall:
     container_name: ecostars-authority-heimdall
-    image: rmenendez8/heimdall:v2.1.0
+    image: quay.io/eunomia_upm/heimdall:v1.5.0
     platform: linux/amd64
     restart: always
     ports:
