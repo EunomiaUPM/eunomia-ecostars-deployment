@@ -1,3 +1,4 @@
+# Vault: only the committed templates; the setup jobs generate the rest
 vault/**
 !vault/**/
 !vault/**/*.example
@@ -7,10 +8,32 @@ static/envs/**
 !static/envs/**/
 !static/envs/**/*.example
 
+# Generated identity material (the setup jobs write these names)
 cert.json.example
 public_key.json.example
 private_key.json.example
 
-*.ps1
+# Environment variables
+.env
+.env.local
+.env.*.local
+!.env.example
+!.env.*.example
+# Read by the CLI as a fallback, from before the move to .env at the root
 scripts/.env
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+
+# Node
+node_modules/
+
+# macOS
+.DS_Store
+
+*.ps1
 internal
