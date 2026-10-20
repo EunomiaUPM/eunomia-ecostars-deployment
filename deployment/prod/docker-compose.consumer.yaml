@@ -30,16 +30,24 @@ services:
           "max_lease_ttl": "720h"
         }
     command: server
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
 
   consumer-db:
-    container_name: "consumer-db"
-    image: "postgres"
+    container_name: consumer-db
+    image: postgres:18
     restart: always
     env_file:
       - ./../../static/envs/consumer/db.env
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -h localhost"]
+      interval: 10s
+      retries: 10
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
 
   consumer-redis:
-    image: redis:alpine
+    image: redis:8-alpine
     restart: always
     container_name: consumer-redis
     ports:
@@ -48,13 +56,61 @@ services:
       redis-server
       --requirepass ds_core_consumer_redis
       --user admin on >ds_core_consumer_redis ~* +@all
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  # =========================
+  # Fafnir wallet
+  # =========================
+  # Runs with file-based secrets (is_vault_real: false in fafnir.consumer.yaml):
+  # fafnir v0.2.0's setup writes the DB secret to Vault under the VAULT_PATH
+  # key but reads it back from VAULT_APP_DB, so it cannot boot against a real
+  # Vault. It only needs its DB credentials, mounted read-only, and it is
+  # reachable on the compose network alone: no port is published.
+  consumer-fafnir-setup:
+    container_name: consumer-fafnir-setup
+    image: rmenendez8/fafnir:v0.2.0
+    platform: linux/amd64
+    depends_on:
+      consumer-db:
+        condition: service_healthy
+    volumes:
+      - ./../../static/config/consumer/prod/fafnir.consumer.yaml:/app/static/fafnir/config.yaml:ro
+      - ./../../vault/consumer/secrets/db.json:/app/vault/secrets/db.json:ro
+    environment:
+      VAULT_PATH: /app/vault/secrets
+      VAULT_APP_DB: db.json
+    command: ["setup", "--env-file", "/app/static/fafnir/config.yaml"]
+    restart: "no"
+
+  consumer-fafnir-wallet:
+    container_name: consumer-fafnir-wallet
+    image: rmenendez8/fafnir:v0.2.0
+    platform: linux/amd64
+    restart: always
+    depends_on:
+      consumer-fafnir-setup:
+        condition: service_completed_successfully
+    volumes:
+      - ./../../static/config/consumer/prod/fafnir.consumer.yaml:/app/static/fafnir/config.yaml:ro
+      - ./../../vault/consumer/secrets/db.json:/app/vault/secrets/db.json:ro
+    environment:
+      VAULT_PATH: /app/vault/secrets
+      VAULT_APP_DB: db.json
+    command: ["start", "--env-file", "/app/static/fafnir/config.yaml"]
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:7001/readiness"]
+      interval: 10s
+      timeout: 2s
+      retries: 10
 
   # =========================
   # Setup job (one-shot)
   # =========================
   consumer-setup:
     container_name: consumer-setup
-    image: quay.io/eunomia_upm/ds-agent
+    image: quay.io/eunomia_upm/ds-agent:v0.4.0
+    platform: linux/amd64
     command: ["setup", "-e", "/app/static/config/core.consumer.yaml"]
     volumes:
       - ./../../static/config/consumer/prod:/app/static/config
@@ -62,19 +118,27 @@ services:
       - ./../../static/policy_templates:/app/static/policy_templates
       - ./../../vault/consumer:/app/vault
     depends_on:
-      - consumer-db
-      - consumer-vault
-      - consumer-redis
+      consumer-db:
+        condition: service_healthy
+      consumer-vault:
+        condition: service_started
+      consumer-redis:
+        condition: service_started
     env_file:
       - ./../../static/envs/consumer/core.env
     restart: "no"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
 
   # =========================
   # Main service
   # =========================
+  # No healthcheck: in prod the agent terminates TLS itself on 443, so a probe
+  # from inside the container would need the public certificate's hostname.
   consumer:
     container_name: consumer
-    image: quay.io/eunomia_upm/ds-agent
+    image: quay.io/eunomia_upm/ds-agent:v0.4.0
+    platform: linux/amd64
     command: ["start", "-e", "/app/static/config/core.consumer.yaml"]
     ports:
       - "443:443"
@@ -87,12 +151,16 @@ services:
       consumer-setup:
         condition: service_completed_successfully
       consumer-db:
-        condition: service_started
+        condition: service_healthy
       consumer-vault:
         condition: service_started
       consumer-redis:
         condition: service_started
+      consumer-fafnir-wallet:
+        condition: service_healthy
     env_file:
       - ./../../static/envs/consumer/core.env
     environment:
       RUST_BACKTRACE: full
+    extra_hosts:
+      - "host.docker.internal:host-gateway"

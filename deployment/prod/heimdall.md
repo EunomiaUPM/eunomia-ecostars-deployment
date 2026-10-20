@@ -42,7 +42,8 @@ There are two types of files:
 **Credential files** (`.json.example` → `.json`): These contain connection credentials used by Heimdall internally.
 
 - `db.json` - database credentials. If you changed the values in `db.env`, make sure they match here too.
-- `wallet.json` - wallet credentials. **The example values will not work** as they reference existing external accounts. Replace them with your own wallet credentials before launching.
+
+There is no `wallet.json`: the Fafnir wallet that runs next to the Heimdall keeps its keys and DID in the Heimdall's database, and reaches it with this same `db.json`, mounted read-only.
 
 ---
 
@@ -57,9 +58,9 @@ Fill in the environment files that do not depend on other services yet. All file
 Credentials for the main Heimdall database. Use whatever values you want, or leave them as they are - just remember them, as they must match `db.json` in `/vault/heimdall/secrets/`.
 
 ```env
-POSTGRES_PASSWORD=mini_heimdall
-POSTGRES_USER=mini_heimdall
-POSTGRES_DB=mini_heimdall
+POSTGRES_PASSWORD=standalone_heimdall
+POSTGRES_USER=standalone_heimdall
+POSTGRES_DB=standalone_heimdall
 ```
 
 ### `keycloak.db.env`
@@ -98,14 +99,14 @@ KC_HTTPS_CERTIFICATE_KEY_FILE=/etc/x509/https/vault-key-pkcs8.pem
 
 ## Step 3 - Application configuration
 
-Edit `/static/config/heimdall/prod/basic_dataspace_authority.yaml`:
+Edit `/static/config/heimdall/prod/eco_authority.yaml`, the one `docker-compose.heimdall.yaml` runs
+(`basic_dataspace_authority.yaml` is the same authority without the GAIA-X clearing house; the line numbers match):
 
 | Line | Change                                                     |
 | ---- | ---------------------------------------------------------- |
-| 6    | Replace `your_domain` with `your.domain.com`               |
-| 38   | Replace `your_domain` with `your.domain.com`               |
-| 41   | Replace `your_domain` with `your.domain.com`               |
-| 55   | Replace `change_me` with your desired dataspace identifier |
+| 6    | Replace `your_domain` with `your.domain.com` (public URL)  |
+| 42   | Replace `your_domain` with `your.domain.com` (the `did:web`) |
+| 54   | Replace `change_me` with your desired dataspace identifier |
 
 ---
 
@@ -192,6 +193,8 @@ VAULT_MOUNT=heimdall
 
 # Secret paths - these act as internal paths, keep them private
 VAULT_APP_DB=database/postgres
+# VAULT_APP_WALLET must stay set although no wallet secret exists any more:
+# the real-Vault loader in ymir v0.8 reads it before checking for the file.
 VAULT_APP_WALLET=wallet/main
 VAULT_APP_PRIV_KEY=crypto/keys/private
 VAULT_APP_PUB_PKEY=crypto/keys/public
@@ -312,8 +315,16 @@ openssl rand -base64 24
 With all environment files complete, start all services:
 
 ```bash
-docker compose -f docker-compose.prod.yaml up -d
+docker compose -f docker-compose.heimdall.yaml up -d
 ```
+
+or, from the repo root, `./eunomia up authority --env prod`, which also waits for every service to be ready.
+
+> [!NOTE]
+> **Fafnir wallet.** The compose file also starts `heimdall-fafnir-setup` and `heimdall-fafnir-wallet`. The wallet runs with
+> file-based secrets (`is_vault_real: false` in `static/config/heimdall/prod/fafnir.heimdall.yaml`): fafnir v0.2.0 writes its DB
+> secret to Vault under one key and reads it back from another, so it cannot boot against a real Vault. It only holds
+> the DB credentials from `db.json`, and publishes no port.
 
 All services should now be running. Visit `https://your.domain.com/admin/home` - you should be redirected to the Keycloak login page.
 

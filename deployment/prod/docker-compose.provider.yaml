@@ -34,16 +34,20 @@ services:
       - "host.docker.internal:host-gateway"
 
   provider-db:
-    container_name: "provider-db"
-    image: "postgres"
+    container_name: provider-db
+    image: postgres:18
     restart: always
     env_file:
       - ./../../static/envs/provider/db.env
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -h localhost"]
+      interval: 10s
+      retries: 10
     extra_hosts:
       - "host.docker.internal:host-gateway"
 
   provider-redis:
-    image: redis:alpine
+    image: redis:8-alpine
     restart: always
     container_name: provider-redis
     ports:
@@ -56,11 +60,57 @@ services:
       - "host.docker.internal:host-gateway"
 
   # =========================
+  # Fafnir wallet
+  # =========================
+  # Runs with file-based secrets (is_vault_real: false in fafnir.provider.yaml):
+  # fafnir v0.2.0's setup writes the DB secret to Vault under the VAULT_PATH
+  # key but reads it back from VAULT_APP_DB, so it cannot boot against a real
+  # Vault. It only needs its DB credentials, mounted read-only, and it is
+  # reachable on the compose network alone: no port is published.
+  provider-fafnir-setup:
+    container_name: provider-fafnir-setup
+    image: rmenendez8/fafnir:v0.2.0
+    platform: linux/amd64
+    depends_on:
+      provider-db:
+        condition: service_healthy
+    volumes:
+      - ./../../static/config/provider/prod/fafnir.provider.yaml:/app/static/fafnir/config.yaml:ro
+      - ./../../vault/provider/secrets/db.json:/app/vault/secrets/db.json:ro
+    environment:
+      VAULT_PATH: /app/vault/secrets
+      VAULT_APP_DB: db.json
+    command: ["setup", "--env-file", "/app/static/fafnir/config.yaml"]
+    restart: "no"
+
+  provider-fafnir-wallet:
+    container_name: provider-fafnir-wallet
+    image: rmenendez8/fafnir:v0.2.0
+    platform: linux/amd64
+    restart: always
+    depends_on:
+      provider-fafnir-setup:
+        condition: service_completed_successfully
+    volumes:
+      - ./../../static/config/provider/prod/fafnir.provider.yaml:/app/static/fafnir/config.yaml:ro
+      - ./../../vault/provider/secrets/db.json:/app/vault/secrets/db.json:ro
+    environment:
+      VAULT_PATH: /app/vault/secrets
+      VAULT_APP_DB: db.json
+    command: ["start", "--env-file", "/app/static/fafnir/config.yaml"]
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:7001/readiness"]
+      interval: 10s
+      timeout: 2s
+      retries: 10
+
+  # =========================
   # Setup job (one-shot)
   # =========================
   provider-setup:
     container_name: provider-setup
-    image: quay.io/eunomia_upm/ds-agent
+    image: quay.io/eunomia_upm/ds-agent:v0.4.0
+    platform: linux/amd64
     command: ["setup", "-e", "/app/static/config/core.provider.yaml"]
     volumes:
       - ./../../static/config/provider/prod:/app/static/config
@@ -68,9 +118,12 @@ services:
       - ./../../static/policy_templates:/app/static/policy_templates
       - ./../../vault/provider:/app/vault
     depends_on:
-      - provider-db
-      - provider-vault
-      - provider-redis
+      provider-db:
+        condition: service_healthy
+      provider-vault:
+        condition: service_started
+      provider-redis:
+        condition: service_started
     env_file:
       - ./../../static/envs/provider/core.env
     restart: "no"
@@ -80,9 +133,12 @@ services:
   # =========================
   # Main service
   # =========================
+  # No healthcheck: in prod the agent terminates TLS itself on 443, so a probe
+  # from inside the container would need the public certificate's hostname.
   provider:
     container_name: provider
-    image: quay.io/eunomia_upm/ds-agent
+    image: quay.io/eunomia_upm/ds-agent:v0.4.0
+    platform: linux/amd64
     command: ["start", "-e", "/app/static/config/core.provider.yaml"]
     ports:
       - "443:443"
@@ -95,12 +151,16 @@ services:
       provider-setup:
         condition: service_completed_successfully
       provider-db:
-        condition: service_started
+        condition: service_healthy
       provider-vault:
         condition: service_started
       provider-redis:
         condition: service_started
+      provider-fafnir-wallet:
+        condition: service_healthy
     env_file:
       - ./../../static/envs/provider/core.env
     environment:
       RUST_BACKTRACE: full
+    extra_hosts:
+      - "host.docker.internal:host-gateway"

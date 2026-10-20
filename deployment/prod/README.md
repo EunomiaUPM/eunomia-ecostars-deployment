@@ -1,6 +1,6 @@
 # Prod Deployment
 
-This folder contains the production deployment for the Eunomia framework. Unlike the [mini deployment](../mini/README.md), this mode is designed for real servers with a domain name, TLS certificates, and production-grade secrets management through HashiCorp Vault.
+This folder contains the production deployment for the Eunomia framework. Unlike the [standalone deployment](../standalone/README.md), this mode is designed for real servers with a domain name, TLS certificates, and production-grade secrets management through HashiCorp Vault.
 
 ---
 
@@ -35,9 +35,16 @@ Each component has its own Docker Compose file and its own Vault instance. They 
 
 ---
 
-## Prerequisites: Walt.id Wallet
+## Wallet: Fafnir
 
-Both components depend on the **public walt.id wallet API** - no local deployment is required. Production credentials in `wallet.json` must point to real accounts registered on the public walt.id platform.
+Each component runs its own [Fafnir](https://github.com/EunomiaUPM/fafnir-wallet) wallet (`rmenendez8/fafnir:v0.2.0`) inside its compose file, so there is no external wallet service or account to set up. The wallet stores its keys and DID in the component's own database and is reachable only on the compose network.
 
-> [!IMPORTANT]
-> The example `wallet.json` files in `/vault/*/secrets/` reference existing test accounts and **will not work in production**. You must replace them with credentials from your own walt.id accounts before launching.
+## Images
+
+| Component | Image |
+| --------- | ----- |
+| Heimdall | `quay.io/eunomia_upm/heimdall:v1.5.0` |
+| Agent | `quay.io/eunomia_upm/ds-agent:v0.4.0` |
+| Wallet | `rmenendez8/fafnir:v0.2.0` |
+
+All three are amd64 only. `./eunomia images --env prod --check` lists newer tags in the registries.

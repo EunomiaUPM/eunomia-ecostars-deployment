@@ -42,7 +42,8 @@ There are two types of files:
 **Credential files** (`.json.example` → `.json`): These contain connection credentials used by the Agent internally.
 
 - `db.json` - database credentials. If you changed the values in `db.env`, make sure they match here too.
-- `wallet.json` - wallet credentials. **The example values will not work** as they reference existing external accounts. Replace them with your own wallet credentials before launching.
+
+There is no `wallet.json`: the Fafnir wallet that runs next to the Agent keeps its keys and DID in the Agent's database, and reaches it with this same `db.json`, mounted read-only.
 
 ---
 
@@ -57,21 +58,19 @@ Fill in the environment files that do not depend on other services yet. All file
 Credentials for the main Agent database. Use whatever values you want, or leave them as they are - just remember them, as they must match `db.json` in `/vault/consumer/secrets/`.
 
 ```env
-POSTGRES_PASSWORD=mini_consumer
-POSTGRES_USER=mini_consumer
-POSTGRES_DB=mini_consumer
+POSTGRES_PASSWORD=standalone_consumer
+POSTGRES_USER=standalone_consumer
+POSTGRES_DB=standalone_consumer
 ```
 
 ## Step 3 - Application configuration
 
 Edit `/static/config/consumer/prod/core.consumer.yaml`:
 
-| Line       | Change                                       |
-| ---------- | -------------------------------------------- |
-| 6          | Replace `your_domain` with `your.domain.com` |
-| 89         | Replace `your_domain` with `your.domain.com` |
-| 93         | Replace `your_domain` with `your.domain.com` |
-| identifier |
+| Line | Change                                                        |
+| ---- | ------------------------------------------------------------- |
+| 6    | Replace `your_domain` with `your.domain.com` (public URL)     |
+| 90   | Replace `your_domain` with `your.domain.com` (the `did:web`)  |
 
 ---
 
@@ -158,6 +157,8 @@ VAULT_MOUNT=consumer
 
 # Secret paths - these act as internal paths, keep them private
 VAULT_APP_DB=database/postgres
+# VAULT_APP_WALLET must stay set although no wallet secret exists any more:
+# the real-Vault loader in ymir v0.8 reads it before checking for the file.
 VAULT_APP_WALLET=wallet/main
 VAULT_APP_PRIV_KEY=crypto/keys/private
 VAULT_APP_PUB_PKEY=crypto/keys/public
@@ -176,6 +177,14 @@ With all environment files complete, start all services:
 ```bash
 docker compose -f docker-compose.consumer.yaml up -d
 ```
+
+or, from the repo root, `./eunomia up consumer --env prod`, which also waits for every service to be ready.
+
+> [!NOTE]
+> **Fafnir wallet.** The compose file also starts `consumer-fafnir-setup` and `consumer-fafnir-wallet`. The wallet runs with
+> file-based secrets (`is_vault_real: false` in `static/config/consumer/prod/fafnir.consumer.yaml`): fafnir v0.2.0 writes its DB
+> secret to Vault under one key and reads it back from another, so it cannot boot against a real Vault. It only holds
+> the DB credentials from `db.json`, and publishes no port.
 
 All services should now be running. Visit `https://your.domain.com/admin/login` - you should be redirected to the Keycloak login page.
 

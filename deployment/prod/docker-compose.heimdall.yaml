@@ -33,21 +33,73 @@ services:
 
   heimdall-db:
     container_name: heimdall-db
-    image: postgres
+    image: postgres:18
     restart: always
     env_file:
       - ./../../static/envs/heimdall/db.env
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -h localhost"]
+      interval: 10s
+      retries: 10
+
+  # =========================
+  # Fafnir wallet
+  # =========================
+  # Runs with file-based secrets (is_vault_real: false in fafnir.heimdall.yaml):
+  # fafnir v0.2.0's setup writes the DB secret to Vault under the VAULT_PATH
+  # key but reads it back from VAULT_APP_DB, so it cannot boot against a real
+  # Vault. It only needs its DB credentials, mounted read-only, and it is
+  # reachable on the compose network alone: no port is published.
+  heimdall-fafnir-setup:
+    container_name: heimdall-fafnir-setup
+    image: rmenendez8/fafnir:v0.2.0
+    platform: linux/amd64
+    depends_on:
+      heimdall-db:
+        condition: service_healthy
+    volumes:
+      - ./../../static/config/heimdall/prod/fafnir.heimdall.yaml:/app/static/fafnir/config.yaml:ro
+      - ./../../vault/heimdall/secrets/db.json:/app/vault/secrets/db.json:ro
+    environment:
+      VAULT_PATH: /app/vault/secrets
+      VAULT_APP_DB: db.json
+    command: ["setup", "--env-file", "/app/static/fafnir/config.yaml"]
+    restart: "no"
+
+  heimdall-fafnir-wallet:
+    container_name: heimdall-fafnir-wallet
+    image: rmenendez8/fafnir:v0.2.0
+    platform: linux/amd64
+    restart: always
+    depends_on:
+      heimdall-fafnir-setup:
+        condition: service_completed_successfully
+    volumes:
+      - ./../../static/config/heimdall/prod/fafnir.heimdall.yaml:/app/static/fafnir/config.yaml:ro
+      - ./../../vault/heimdall/secrets/db.json:/app/vault/secrets/db.json:ro
+    environment:
+      VAULT_PATH: /app/vault/secrets
+      VAULT_APP_DB: db.json
+    command: ["start", "--env-file", "/app/static/fafnir/config.yaml"]
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:7001/readiness"]
+      interval: 10s
+      timeout: 2s
+      retries: 10
 
   heimdall-setup:
     container_name: heimdall-setup
-    image: quay.io/eunomia_upm/heimdall
+    image: quay.io/eunomia_upm/heimdall:v1.5.0
+    platform: linux/amd64
     volumes:
       - ./../../static/config/heimdall/prod:/app/static/config
       - ./../../static/specs/heimdall:/app/static/specs
       - ./../../vault/heimdall:/app/vault
     depends_on:
-      - heimdall-db
-      - heimdall-vault
+      heimdall-db:
+        condition: service_healthy
+      heimdall-vault:
+        condition: service_started
     env_file:
       - ./../../static/envs/heimdall/heimdall.env
     environment:
@@ -60,7 +112,9 @@ services:
 
   heimdall:
     container_name: heimdall
-    image: quay.io/eunomia_upm/heimdall
+    image: quay.io/eunomia_upm/heimdall:v1.5.0
+    platform: linux/amd64
+    restart: always
     volumes:
       - ./../../static/config/heimdall/prod:/app/static/config
       - ./../../static/specs/heimdall:/app/static/specs
@@ -68,6 +122,8 @@ services:
     depends_on:
       heimdall-setup:
         condition: service_completed_successfully
+      heimdall-fafnir-wallet:
+        condition: service_healthy
     env_file:
       - ./../../static/envs/heimdall/heimdall.env
     environment:
@@ -76,6 +132,12 @@ services:
       - start
       - --env-file
       - /app/static/config/eco_authority.yaml
+    # has_tls_proxy: oauth2-proxy terminates TLS, heimdall serves plain HTTP on 1500.
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:1500/readiness"]
+      interval: 10s
+      timeout: 2s
+      retries: 10
 
   keycloak:
     container_name: keycloak
