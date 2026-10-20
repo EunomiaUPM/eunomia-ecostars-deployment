@@ -10,7 +10,7 @@ services:
     ports:
       - "1450:5432"
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U mini_heimdall"]
+      test: ["CMD-SHELL", "pg_isready -U standalone_heimdall"]
       interval: 10s
       retries: 10
 
@@ -26,7 +26,7 @@ services:
       heimdall-db:
         condition: service_healthy
     volumes:
-      - ./../../static/config/heimdall/mini/fafnir.heimdall.yaml:/app/static/fafnir/config.yaml
+      - ./../../static/config/heimdall/standalone/fafnir.heimdall.yaml:/app/static/fafnir/config.yaml
       - ./../../vault/heimdall/secrets/db.json.example:/app/vault/secrets/db.json.example
     env_file:
       - ./../../static/envs/heimdall/fafnir.env.example
@@ -43,7 +43,7 @@ services:
       heimdall-fafnir-setup:
         condition: service_completed_successfully
     volumes:
-      - ./../../static/config/heimdall/mini/fafnir.heimdall.yaml:/app/static/fafnir/config.yaml
+      - ./../../static/config/heimdall/standalone/fafnir.heimdall.yaml:/app/static/fafnir/config.yaml
       - ./../../vault/heimdall/secrets/db.json.example:/app/vault/secrets/db.json.example
     env_file:
       - ./../../static/envs/heimdall/fafnir.env.example
@@ -63,7 +63,7 @@ services:
     image: quay.io/eunomia_upm/heimdall:v1.5.0
     platform: linux/amd64
     volumes:
-      - ./../../static/config/heimdall/mini:/app/static/config
+      - ./../../static/config/heimdall/standalone:/app/static/config
       - ./../../static/specs/heimdall:/app/static/specs
       - ./../../vault/heimdall:/app/vault
     depends_on:
@@ -76,7 +76,7 @@ services:
     command:
       - setup
       - --env-file
-      - /app/static/config/mini_basic_dataspace_authority.yaml
+      - /app/static/config/standalone.authority.yaml
     restart: "no"
 
   heimdall:
@@ -87,7 +87,7 @@ services:
     ports:
       - "1500:1500"
     volumes:
-      - ./../../static/config/heimdall/mini:/app/static/config
+      - ./../../static/config/heimdall/standalone:/app/static/config
       - ./../../static/specs/heimdall:/app/static/specs
       - ./../../vault/heimdall:/app/vault
     depends_on:
@@ -102,7 +102,7 @@ services:
     command:
       - start
       - --env-file
-      - /app/static/config/mini_basic_dataspace_authority.yaml
+      - /app/static/config/standalone.authority.yaml
     healthcheck:
       test: ["CMD", "wget", "-q", "--spider", "http://localhost:1500/readiness"]
       interval: 10s
