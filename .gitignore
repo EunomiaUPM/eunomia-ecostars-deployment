@@ -13,3 +13,4 @@ private_key.json.example
 
 *.ps1
 scripts/.env
+internal
