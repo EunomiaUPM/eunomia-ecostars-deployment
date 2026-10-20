@@ -3,7 +3,7 @@ name: ecostars-consumer
 services:
   consumer-db:
     container_name: ecostars-consumer-db
-    image: "postgres"
+    image: postgres:18
     restart: always
     env_file:
       - ./../../static/envs/consumer/db.env.example
@@ -15,7 +15,7 @@ services:
       retries: 10
 
   consumer-redis:
-    image: redis:alpine
+    image: redis:8-alpine
     restart: always
     container_name: ecostars-consumer-redis
     ports:

@@ -3,7 +3,7 @@ name: ecostars-provider
 services:
   provider-db:
     container_name: ecostars-provider-db
-    image: "postgres"
+    image: postgres:18
     restart: always
     env_file:
       - ./../../static/envs/provider/db.env.example
@@ -15,7 +15,7 @@ services:
       retries: 10
 
   provider-redis:
-    image: redis:alpine
+    image: redis:8-alpine
     restart: always
     container_name: ecostars-provider-redis
     ports:

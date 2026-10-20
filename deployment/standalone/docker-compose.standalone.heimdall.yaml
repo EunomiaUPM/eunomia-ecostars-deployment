@@ -3,7 +3,7 @@ name: ecostars-authority
 services:
   heimdall-db:
     container_name: ecostars-authority-heimdall-db
-    image: postgres
+    image: postgres:18
     restart: always
     env_file:
       - ./../../static/envs/heimdall/db.env.example
