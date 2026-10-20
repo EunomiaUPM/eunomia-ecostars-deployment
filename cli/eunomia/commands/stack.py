@@ -65,11 +65,11 @@ def up(env: str, nodes: Sequence[str], onboarding: bool, populate: bool, pull: b
             args.append("--build")
         compose.compose(stack, *args)
 
-    ep = settings.endpoints(env)
+    urls = {s.node: settings.node_url(env, s.node) for s in chosen if s.node != "client"}
     log.step("Checking readiness from this host")
     for stack in chosen:
         if stack.readiness:
-            compose.wait_http(stack.node.capitalize(), f"{ep.url(stack.node)}{stack.readiness}")
+            compose.wait_http(stack.node.capitalize(), f"{urls[stack.node]}{stack.readiness}")
 
     whole_dataspace = all(n in targets for n in DATASPACE_NODES)
     if env == "prod":
@@ -77,6 +77,7 @@ def up(env: str, nodes: Sequence[str], onboarding: bool, populate: bool, pull: b
         # steps are run once all of them are up, from anywhere.
         log.info("\nProd: run `eunomia onboard --env prod` and `eunomia catalog populate --env prod` once every node is up.")
     else:
+        ep = settings.endpoints(env)
         if onboarding and whole_dataspace:
             onboard.run_all(ep)
         elif onboarding:
@@ -91,8 +92,7 @@ def up(env: str, nodes: Sequence[str], onboarding: bool, populate: bool, pull: b
             else:
                 catalog.populate(ep.provider, esds)
 
-    lines = [f"  {s.node:<10} {ep.url(s.node)}{'/admin/home' if s.node == 'authority' else '/admin/login'}"
-             for s in chosen if s.node != "client"]
+    lines = [f"  {node:<10} {url}{'/admin/home' if node == 'authority' else '/admin/login'}" for node, url in urls.items()]
     if "client" in targets:
         lines.append("  client     http://127.0.0.1:8000/docs  ·  Metabase http://127.0.0.1:3000")
     log.ok(f"\n{env.capitalize()} deployment ready:\n" + "\n".join(lines))
@@ -229,17 +229,20 @@ def _containers(stack: Stack) -> List[Dict[str, str]]:
 
 def status(env: str) -> int:
     compose.require("docker")
-    ep = settings.endpoints(env)
     healthy = True
     for node, stack in settings.stacks(env).items():
         rows = _containers(stack)
-        if node == "client" and not rows:
+        # A prod server runs one node; the client stack is optional anywhere.
+        if not rows and (node == "client" or env == "prod"):
             continue
         ready = ""
         if stack.readiness:
-            code = http.probe(f"{ep.url(node)}{stack.readiness}")
-            ready = "ready" if code == 200 else f"not ready ({code or 'no answer'})"
-            healthy &= code == 200
+            if env == "prod" and not os.environ.get(f"{node.upper()}_URL"):
+                ready = f"readiness unknown: {node.upper()}_URL not set"
+            else:
+                code = http.probe(f"{settings.node_url(env, node)}{stack.readiness}")
+                ready = "ready" if code == 200 else f"not ready ({code or 'no answer'})"
+                healthy &= code == 200
         print(f"\n{node}  {ready}")
         if not rows:
             print("    (no containers)")

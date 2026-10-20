@@ -193,6 +193,17 @@ _STANDALONE_DEFAULTS = {
 }
 
 
+def node_url(env: str, node: str) -> str:
+    """One participant's URL. Unlike endpoints(), needs only that node's setting."""
+    name = f"{node.upper()}_URL"
+    if env == "standalone":
+        return (os.environ.get(name) or _STANDALONE_DEFAULTS[name]).rstrip("/")
+    value = os.environ.get(name)
+    if not value:
+        raise log.fail(f"{name} is not set. Prod has no default URLs: add it to .env.")
+    return value.rstrip("/")
+
+
 def endpoints(env: str) -> Endpoints:
     def pick(name: str, fallback: Optional[str] = None) -> str:
         value = os.environ.get(name) or fallback
