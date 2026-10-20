@@ -191,7 +191,7 @@ API=https://staging-api.ecostars.ai/esds
 API_KEY=<your-ecostars-api-key>
 ```
 
-`ESDS_API` and `ESDS_API_KEY` in your shell override the file. Check them before populating the catalog:
+That file is not tracked by git, so each machine needs its own; copy the template and fill in the key. `ESDS_API` and `ESDS_API_KEY` in your shell override it. Check them before populating the catalog:
 
 ```bash
 ./eunomia esds check
@@ -328,7 +328,7 @@ Onboarding and the catalog span servers, so run them once every node is up, from
 ./eunomia e2e --env prod
 ```
 
-`./eunomia restart <node…>` restarts nodes on their servers over SSH, using the `<NODE>_SSH_*` settings in `.env`. It recreates only the agent and its wallet: the databases have no volume. Restarting `client` wipes the client stack (`down -v`) and asks first. [`.github/workflows/deploy.yml`](.github/workflows/deploy.yml) deploys prod on every push to `main`; see [`deployment/AUTOMATED-DEPLOYMENT.md`](deployment/AUTOMATED-DEPLOYMENT.md).
+`./eunomia restart <node…>` restarts nodes on their servers over SSH, using the `<NODE>_SSH_*` settings in `.env`. It recreates only the agent and its wallet: the databases have no volume. Restarting `client` wipes the client stack (`down -v`) and asks first. [`.github/workflows/deploy.yml`](.github/workflows/deploy.yml) deploys prod when you start it from the Actions tab (it does not run on push yet); see [`deployment/AUTOMATED-DEPLOYMENT.md`](deployment/AUTOMATED-DEPLOYMENT.md).
 
 ---
 

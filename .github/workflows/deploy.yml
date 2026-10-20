@@ -1,12 +1,17 @@
 name: Deploy
 
-# Prod only. The standalone deployment runs every participant on one host,
-# so there is nothing to spread over three servers: run `./eunomia up` there.
+# Prod only, and manual for now: the Fafnir-generation prod configs have not
+# been run against a real Vault yet. To deploy on every push to main again,
+# add this under `on:`
+#
+#   push:
+#     branches:
+#       - main
+#
+# The standalone deployment runs every participant on one host, so there is
+# nothing to spread over three servers: run `./eunomia up` there.
 
 on:
-  push:
-    branches:
-      - main
   workflow_dispatch:
 
 env:

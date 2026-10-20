@@ -1,6 +1,6 @@
 # Automated Deployment with GitHub Actions
 
-This document explains how the CI/CD pipeline works for the Ecostars pilot deployment. The workflow automates SSH-based deployment of all three machines whenever code is pushed to `main`.
+This document explains how the CI/CD pipeline works for the Ecostars pilot deployment. The workflow automates SSH-based deployment of all three machines. For now it runs only when started by hand.
 
 ---
 
@@ -9,7 +9,7 @@ This document explains how the CI/CD pipeline works for the Ecostars pilot deplo
 The workflow file lives at [`.github/workflows/deploy.yml`](../.github/workflows/deploy.yml).
 
 ```
-                  Push to main
+               Manual run (Actions)
                         │
                         ▼
                   deploy-heimdall         ← Machine A (must finish first)
@@ -41,10 +41,11 @@ Each job connects to its target machine over SSH and runs:
 
 | Event | Environment deployed |
 |---|---|
-| Push to `main` | `prod` (automatic) |
 | Manual run (`workflow_dispatch`) | `prod` |
 
 To trigger a manual run: go to **Actions → Deploy → Run workflow** in the GitHub UI.
+
+It does not run on push to `main`: the Fafnir-generation prod configs have not been run against a real Vault yet. Once they have, add `push: branches: [main]` under `on:` in `deploy.yml` (the file has the snippet in a comment) to deploy on every merge.
 
 Only prod is deployed. The standalone deployment runs every participant on one host, so there is nothing to spread over three machines: run `./eunomia up` on it.
 
@@ -151,7 +152,7 @@ cp /opt/ecostars/services/consumer-client-stack/.env.template \
 # Fill in the required values
 ```
 
-After that, every push to `main` handles updates automatically.
+After that, each run of the workflow updates the three machines.
 
 ---
 
