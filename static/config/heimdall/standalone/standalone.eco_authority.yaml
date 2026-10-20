@@ -1,0 +1,66 @@
+# ==========================
+# COMMON ANCHORS
+# ==========================
+http_host: &http_host
+  protocol: 'http'
+  url: 'host.docker.internal'
+  port: '1500'
+  internal_port: null
+
+# ==========================
+# CONFIG
+# ==========================
+
+hosts_config:
+  http: *http_host
+  grpc: null
+  graphql: null
+
+connection_config:
+  is_prod: false
+  is_vault_real: false
+  has_tls_proxy: false
+
+db_config:
+  db_type: Postgres
+  url: 'heimdall-db'
+  port: '5432'
+
+wallet_config:
+  wallet: Fafnir
+  api:
+    http:
+      protocol: 'http'
+      url: 'ecostars-authority-fafnir-wallet'
+      port: '7001'
+      internal_port: null
+    grpc: null
+    graphql: null
+
+did_config:
+  type: Jwk
+  # domain: 'host.docker.internal'
+  # path:
+  # port: '1500'
+
+role: EcoAuthority
+
+api_config:
+  version: 'v1'
+  openapi_path: '/app/static/specs/openapi/openapi.json'
+
+issue_config:
+  ds_config:
+    dataspace_id: 'HeimdallDataspace'
+  clh_config:
+    label_level: 'SC'
+    engine_version: '2.11.0'
+    rules_version: 'CD25.10'
+    validated_criteria: 'https://docs.gaia-x.eu/policy-rules-committee/compliance-document/25.10/criteria_participant/#PA1.1'
+
+verify_req_config:
+  is_cert_allowed: true
+  auto_approve_cert: true
+  vcs_requested: ['gx:VatId', 'gx:LegalPerson', 'gx:TermsAndConditions']
+
+is_react: true
