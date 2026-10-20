@@ -74,6 +74,11 @@ def show(env: str, check: bool) -> int:
         print(f"{ref}{unpinned}\n    used in {files}")
         if not check or not tag:
             continue
+        if repo.startswith("library/"):
+            # Official images rebuild every tag constantly, so push dates say
+            # nothing about what is newer.
+            print("    (official image: not checked)")
+            continue
         tags = _tags(registry, repo)
         if tags is None:
             print("    (registry not queried)")
