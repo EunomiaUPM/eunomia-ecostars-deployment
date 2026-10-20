@@ -20,7 +20,7 @@ Both surfaces are protected by **Keycloak**.
 
 ## **Standalone usage**
 
-You normally run this service as part of [`deployment/mini`](../../deployment/mini/README.md) or [`deployment/prod`](../../deployment/prod/README.md). For local development of the Provider itself:
+You normally run this service as part of [`deployment/standalone`](../../deployment/standalone/README.md) or [`deployment/prod`](../../deployment/prod/README.md). For local development of the Provider itself:
 
 ### Static API
 
@@ -134,7 +134,7 @@ Both `static-api` and `dynamic-api` are protected and require a valid Bearer Tok
 
 - **URL**: [http://localhost:8080](http://localhost:8080)
 - **Admin Console**: [http://localhost:8080/admin](http://localhost:8080/admin)
-- **Admin credentials**: `admin` / `admin` _(mini deployment only - replace in prod)_
+- **Admin credentials**: `admin` / `admin` _(standalone deployment only - replace in prod)_
 
 ### Default realm
 

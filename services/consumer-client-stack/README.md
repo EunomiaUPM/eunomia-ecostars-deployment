@@ -53,7 +53,7 @@ consumer/
 
 ## **Standalone usage**
 
-You normally run this service as part of [`deployment/mini`](../../deployment/mini/README.md) or [`deployment/prod`](../../deployment/prod/README.md). For local development of the Consumer itself:
+You normally run this service as part of [`deployment/standalone`](../../deployment/standalone/README.md) or [`deployment/prod`](../../deployment/prod/README.md). For local development of the Consumer itself:
 
 1. Create a `.env` file under `services/consumer/`:
 
@@ -87,7 +87,7 @@ From the deployment directory:
 docker compose up --build
 ```
 
-This starts (mini deployment subset relevant to the Consumer):
+This starts (standalone deployment subset relevant to the Consumer):
 
 | Service           | URL                          |
 | ----------------- | ---------------------------- |
@@ -197,6 +197,6 @@ This service does **not** speak DSP itself; it stays a normal HTTP API. All poli
 
 ## **Deployment notes**
 
-See `docker-compose.yml` under [`deployment/mini`](../../deployment/mini/README.md) or [`deployment/prod`](../../deployment/prod/README.md). The `consumer-ingestion` service depends on `transactional-db` with a health check, so the app will only start once PostgreSQL is ready.
+See `docker-compose.yml` under [`deployment/standalone`](../../deployment/standalone/README.md) or [`deployment/prod`](../../deployment/prod/README.md). The `consumer-ingestion` service depends on `transactional-db` with a health check, so the app will only start once PostgreSQL is ready.
 
 To recreate the database schema from scratch, set `drop_first=True` in `create_db_and_tables()` on first startup - **development only**.

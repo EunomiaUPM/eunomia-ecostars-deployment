@@ -1,6 +1,6 @@
 # Automated Deployment with GitHub Actions
 
-This document explains how the CI/CD pipeline works for the EDACCIT Ecostars pilot deployment. The workflow automates SSH-based deployment of all three machines whenever code is pushed to `main`.
+This document explains how the CI/CD pipeline works for the Ecostars pilot deployment. The workflow automates SSH-based deployment of all three machines whenever code is pushed to `main`.
 
 ---
 
@@ -9,7 +9,7 @@ This document explains how the CI/CD pipeline works for the EDACCIT Ecostars pil
 The workflow file lives at [`.github/workflows/deploy.yml`](../.github/workflows/deploy.yml).
 
 ```
-Push to main  ──►  resolve environment
+                  Push to main
                         │
                         ▼
                   deploy-heimdall         ← Machine A (must finish first)
@@ -22,7 +22,7 @@ Push to main  ──►  resolve environment
                                  │
                            DS-Agent stack
                                  │
-                        (prod only) Client Stack
+                           Client Stack
                         (NiFi, Metabase, Postgres)
 ```
 
@@ -32,8 +32,8 @@ Each job connects to its target machine over SSH and runs:
 
 1. `git reset --hard origin/main` — syncs the repo on the machine.
 2. `docker login quay.io` — authenticates to pull updated images.
-3. `docker compose pull` — downloads the latest images.
-4. `docker compose up -d --remove-orphans` — recreates only containers whose image or config changed.
+3. `docker compose pull` — downloads the images pinned in the compose file. Tags are pinned, so a deploy only changes images when a commit bumps a pin (`./eunomia images --check` shows what is newer).
+4. `docker compose up -d --wait --remove-orphans` — recreates only containers whose image or config changed, and fails the job if a service does not become healthy. A sealed Vault after a server restart shows up here: unseal it and re-run the job.
 
 ---
 
@@ -42,9 +42,11 @@ Each job connects to its target machine over SSH and runs:
 | Event | Environment deployed |
 |---|---|
 | Push to `main` | `prod` (automatic) |
-| Manual run (`workflow_dispatch`) | `prod` or `mini` (your choice) |
+| Manual run (`workflow_dispatch`) | `prod` |
 
-To trigger a manual run: go to **Actions → Deploy → Run workflow** in the GitHub UI and select the target environment.
+To trigger a manual run: go to **Actions → Deploy → Run workflow** in the GitHub UI.
+
+Only prod is deployed. The standalone deployment runs every participant on one host, so there is nothing to spread over three machines: run `./eunomia up` on it.
 
 ---
 
@@ -70,14 +72,14 @@ To trigger a manual run: go to **Actions → Deploy → Run workflow** in the Gi
 
 ### In the GitHub repository
 
-- The two GitHub Environments (`prod` and `mini`) created under **Settings → Environments**.
-- All secrets listed below added to each environment.
+- The `prod` GitHub Environment created under **Settings → Environments**.
+- All secrets listed below added to it.
 
 ---
 
 ## GitHub Secrets
 
-Add these secrets under **Settings → Environments → `prod`** (and repeat for `mini` if needed).
+Add these secrets under **Settings → Environments → `prod`**.
 
 | Secret | Description |
 |---|---|
@@ -153,14 +155,13 @@ After that, every push to `main` handles updates automatically.
 
 ---
 
-## Compose files used per environment
+## Compose files
 
-| Environment | Machine A — Heimdall | Machine B — Provider | Machine C — Consumer |
-|---|---|---|---|
-| `prod` | `deployment/prod/docker-compose.heimdall.yaml` | `deployment/prod/docker-compose.provider.yaml` | `deployment/prod/docker-compose.consumer.yaml` + `services/consumer-client-stack/docker-compose.yaml` |
-| `mini` | `deployment/mini/docker-compose.mini.heimdall.yaml` | `deployment/mini/docker-compose.mini.provider.yaml` | `deployment/mini/docker-compose.mini.consumer.yaml` |
+| Machine A — Heimdall | Machine B — Provider | Machine C — Consumer |
+|---|---|---|
+| `deployment/prod/docker-compose.heimdall.yaml` | `deployment/prod/docker-compose.provider.yaml` | `deployment/prod/docker-compose.consumer.yaml` + `services/consumer-client-stack/docker-compose.yaml` |
 
-The Consumer Client Stack (NiFi, NiFi Registry, Metabase, Postgres) is only deployed in `prod`. The `mini` environment does not include it.
+Each compose file starts the node's Fafnir wallet next to it.
 
 ---
 
@@ -169,9 +170,10 @@ The Consumer Client Stack (NiFi, NiFi Registry, Metabase, Postgres) is only depl
 If deploying from scratch, order matters:
 
 1. **Machine A** — deploy Heimdall. Agents cannot register with the dataspace until this is running.
-2. **Machine B** — deploy Provider and run the catalog ingestion script.
+2. **Machine B** — deploy Provider.
 3. **Machine C** — deploy Consumer DS-Agent, then the Client Stack.
-4. **Onboarding** — run `scripts/mini-onboarding.sh` (or the prod equivalent).
+4. **Onboarding and catalog** — from any machine that reaches the three public URLs (set in `.env`):
+   `./eunomia onboard --env prod`, then `./eunomia catalog populate --env prod`. Both skip what is already done, so they are safe to re-run after every deploy.
 
 The workflow enforces this order automatically: Heimdall finishes before Provider and Consumer start.
 
